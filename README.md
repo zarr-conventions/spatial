@@ -16,7 +16,7 @@ This convention is designed to be composable with other conventions:
 
 - Use with a `proj:` convention to add coordinate reference system (CRS) information for geospatial data
 - Use with `multiscales` to define spatial properties at different resolution levels
-- Use standalone for non-geospatial data that has spatial relationships (e.g., microscopy, engineering drawings)
+- Use standalone for non-geospatial data that has spatial relationships (e.g., microscopy, medical imaging)
 
 Examples:
 
@@ -343,15 +343,22 @@ See [examples/multiscales.json](examples/multiscales.json) for a complete exampl
 
 ## FAQ
 
-### Why separate spatial coordinate information from CRS definitions?
+### Why are spatial: and proj: separate conventions?
 
-Separating `spatial:` from `proj:` (or similar CRS conventions) provides several benefits:
+As explained in the [rasterio documentation](https://rasterio.readthedocs.io/): "There are two parts to the georeferencing of raster datasets: the definition of the local, regional, or global system in which a raster's pixels are located; and the parameters by which pixel coordinates are transformed into coordinates in that system."
 
-1. **Broader applicability**: Bounds and transforms are useful beyond geospatial data (microscopy, engineering drawings, medical imaging)
-2. **Simpler model**: No need for complex inheritance or override mechanisms
-3. **Modular composition**: CRS can be defined at group level, while spatial coordinates vary per array
-4. **Tool interoperability**: Non-geospatial tools can use spatial coordinates without understanding CRS specifications
-5. **Cleaner conceptual model**: CRS defines a coordinate system; spatial properties define how array indices map to that system
+This fundamental distinction motivated the design decision ([zarr-conventions issue #9](https://github.com/zarr-conventions/zarr-conventions/issues/9)) to separate these concerns into two conventions:
+
+1. **`proj:`** - Defines the coordinate reference system (CRS): the "local, regional, or global system" using EPSG codes, WKT2, or PROJJSON
+2. **`spatial:`** - Defines the coordinate transformation: the "parameters by which pixel coordinates are transformed" including transform matrices, bounding boxes, and dimension mappings
+
+This separation provides several benefits:
+
+- **Broader applicability**: Bounds and transforms are useful beyond geospatial data (microscopy, medical imaging)
+- **Simpler model**: No need for complex inheritance or override mechanisms - CRS can be defined at group level, while spatial coordinates vary per array
+- **Cleaner conceptual model**: Each convention has a single, well-defined purpose
+- **Tool interoperability**: Non-geospatial tools can use spatial coordinates without understanding CRS specifications
+- **Modular composition**: Each convention can evolve independently
 
 ### How does this compare to the STAC Projection Extension?
 
@@ -366,7 +373,7 @@ Both approaches are valid. The separated approach prioritizes modularity and bro
 
 Yes! The `spatial:` convention is useful on its own for:
 
-- Non-geospatial data with spatial relationships (microscopy, engineering drawings)
+- Non-geospatial data with spatial relationships (microscopy, medical imaging)
 - Data where coordinates are in abstract units
 - Workflows that don't need formal CRS definitions
 - Cases where CRS information is managed separately
