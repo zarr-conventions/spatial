@@ -3,9 +3,16 @@
   "name": "spatial-zarr-convention",
   "version": "0.1.0",
   "scripts": {
-    "test": "node test.js"
+    "test": "node test.js",
+    "lint": "eslint .",
+    "format": "prettier . --write"
   },
   "devDependencies": {
-    "ajv": "^8.12.0"
+    "@eslint/json": "^0.14.0",
+    "@eslint/markdown": "^7.5.1",
+    "ajv": "^8.12.0",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "prettier": "3.7.4"
   }
 }
