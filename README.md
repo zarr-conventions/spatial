@@ -1,9 +1,9 @@
 # Spatial Convention
 
 - **UUID**: 689b58e2-cf7b-45e0-9fff-9cfc0883d6b4
-- **Name**: 'spatial:'
-- **Schema URL**: "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json"
-- **Spec URL**: "https://github.com/zarr-conventions/spatial/blob/v1/README.md"
+- **Name**: "spatial:"
+- **Schema URL**: "<https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json>"
+- **Spec URL**: "<https://github.com/zarr-conventions/spatial/blob/v1/README.md>"
 - **Scope**: Array, Group
 - **Extension Maturity Classification**: Proposal
 - **Owner**: @maxrjones, emmanuelmathot
@@ -60,14 +60,13 @@ This convention can be used with these parts of the Zarr hierarchy:
 
 All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level.
 
-|Property|Type|Description|Required|Reference|
-|---|---|---|---|---|
-|**spatial:dimensions**|`string[]`|Names of spatial dimensions (e.g., ["y", "x"])|Yes|[spatial:dimensions](#spatialdimensions)|
-|**spatial:bbox**|`number[]`|Bounding box in coordinate space|No|[spatial:bbox](#spatialbbox)|
-|**spatial:transform_type**|`string`|Type of coordinate transformation (default: "affine")|No|[spatial:transform_type](#spatialtransform_type)|
-|**spatial:transform**|`number[]`|Affine transformation coefficients|No|[spatial:transform](#spatialtransform)|
-|**spatial:shape**|`number[]`|Shape of spatial dimensions [height, width]|No|[spatial:shape](#spatialshape)|
-
+| Property                   | Type       | Description                                           | Required | Reference                                        |
+| -------------------------- | ---------- | ----------------------------------------------------- | -------- | ------------------------------------------------ |
+| **spatial:dimensions**     | `string[]` | Names of spatial dimensions (e.g., ["y", "x"])        | Yes      | [spatial:dimensions](#spatialdimensions)         |
+| **spatial:bbox**           | `number[]` | Bounding box in coordinate space                      | No       | [spatial:bbox](#spatialbbox)                     |
+| **spatial:transform_type** | `string`   | Type of coordinate transformation (default: "affine") | No       | [spatial:transform_type](#spatialtransform_type) |
+| **spatial:transform**      | `number[]` | Affine transformation coefficients                    | No       | [spatial:transform](#spatialtransform)           |
+| **spatial:shape**          | `number[]` | Shape of spatial dimensions [height, width]           | No       | [spatial:shape](#spatialshape)                   |
 
 ### Field Details
 
@@ -77,8 +76,8 @@ Additional properties are allowed.
 
 Names of spatial dimensions
 
-* **Type**: `string[]`
-* **Required**: Yes
+- **Type**: `string[]`
+- **Required**: Yes
 
 Identifies which dimensions in the Zarr array correspond to spatial axes. This is particularly useful when arrays have multiple dimensions (e.g., time, bands, y, x).
 
@@ -91,10 +90,10 @@ The dimension names must match the dimension names defined in the array's shape.
 
 Bounding box in coordinate space
 
-* **Type**: `number[]`
-* **Required**: No
+- **Type**: `number[]`
+- **Required**: No
 
-Bounding box of the spatial extent in the coordinate space. The length of the array must be 2*n where n is the number of spatial dimensions.
+Bounding box of the spatial extent in the coordinate space. The length of the array must be 2\*n where n is the number of spatial dimensions.
 
 For 2D spatial data: `[xmin, ymin, xmax, ymax]` (4 elements)
 For 3D spatial data: `[xmin, ymin, zmin, xmax, ymax, zmax]` (6 elements)
@@ -105,9 +104,9 @@ The coordinates represent the minimum and maximum values along each spatial axis
 
 Type of coordinate transformation
 
-* **Type**: `string`
-* **Required**: No
-* **Default**: `"affine"`
+- **Type**: `string`
+- **Required**: No
+- **Default**: `"affine"`
 
 Specifies the type of transformation used to map array indices to spatial coordinates. This property enables support for various transformation models.
 
@@ -123,8 +122,8 @@ When `spatial:transform_type` is omitted, implementations MUST assume `"affine"`
 
 Affine transformation coefficients
 
-* **Type**: `number[6]`
-* **Required**: No (but required when `spatial:transform_type` is `"affine"` or omitted)
+- **Type**: `number[6]`
+- **Required**: No (but required when `spatial:transform_type` is `"affine"` or omitted)
 
 Mapping from array index space to coordinate space that preserves points, straight lines, and ratios, including scaling, rotating, or translating. Used when `spatial:transform_type` is `"affine"` or omitted (default behavior).
 
@@ -139,10 +138,12 @@ The 2D transformation maps array indices (i, j) to spatial coordinates (x, y) ac
 ```
 
 Which expands to:
+
 - `x = a*i + b*j + c`
 - `y = d*i + e*j + f`
 
 Where:
+
 - `a`: pixel width (w-e pixel resolution)
 - `b`: row rotation (typically 0)
 - `c`: x-coordinate of the upper-left corner of the upper-left pixel
@@ -163,6 +164,7 @@ Note: Rasterio's `xy()` and `rowcol()` methods automatically add/subtract 0.5 to
 This format uses the Rasterio/Affine coefficient ordering: `[a, b, c, d, e, f]`
 
 This is the same ordering used by:
+
 - Rasterio's `Affine` transformation and `.transform` attribute
 - Python's `affine` library
 - The matrix form commonly used in geospatial Python libraries
@@ -170,6 +172,7 @@ This is the same ordering used by:
 GDAL's `GetGeoTransform` uses a different order: `[c, a, b, f, d, e]` or `[GT(0), GT(1), GT(2), GT(3), GT(4), GT(5)]`
 
 **Converting between formats:**
+
 ```python
 # From GDAL GetGeoTransform to spatial:transform
 gdal_gt = src.GetGeoTransform()  # [GT(0), GT(1), GT(2), GT(3), GT(4), GT(5)]
@@ -186,8 +189,8 @@ spatial_transform = list(affine_transform)[:6]  # Direct conversion
 
 Shape of spatial dimensions
 
-* **Type**: `integer[]`
-* **Required**: No
+- **Type**: `integer[]`
+- **Required**: No
 
 Specifies the dimensions of the spatial axes in array index units.
 
@@ -195,6 +198,7 @@ For 2D spatial data: `[height, width]` corresponding to `[y, x]` (2 elements)
 For 3D spatial data: `[depth, height, width]` corresponding to `[z, y, x]` (3 elements)
 
 This property is particularly useful when:
+
 - The spatial shape differs from the full array shape (e.g., when the array includes non-spatial dimensions)
 - Used with multiscales convention to specify shape at different resolution levels
 - Documenting the spatial extent explicitly
@@ -255,17 +259,11 @@ For geospatial data, combine `spatial:` with `proj:` for complete coordinate inf
     "proj:code": "EPSG:3857",
     "spatial:dimensions": ["Y", "X"],
     "spatial:bbox": [
-      -20037508.342789244,
-      -20037508.342789244,
-      20037508.342789244,
+      -20037508.342789244, -20037508.342789244, 20037508.342789244,
       20037508.342789244
     ],
     "spatial:transform": [
-      156543.03392804097,
-      0.0,
-      -20037508.342789244,
-      0.0,
-      -156543.03392804097,
+      156543.03392804097, 0.0, -20037508.342789244, 0.0, -156543.03392804097,
       20037508.342789244
     ]
   }
@@ -413,5 +411,5 @@ Implementations should handle unknown transform types gracefully (warn or skip) 
 
 The template is based on the [STAC extensions template](https://github.com/stac-extensions/template/blob/main/README.md).
 
-The convention was copied and modified from  
-https://github.com/zarr-developers/zarr-extensions/pull/21 and [https://github.com/EOPF-Explorer/data-model/blob/main/attributes/geo/proj/](https://github.com/EOPF-Explorer/data-model/blob/main/attributes/geo/proj/).
+The convention was copied and modified from
+<https://github.com/zarr-developers/zarr-extensions/pull/21> and [https://github.com/EOPF-Explorer/data-model/blob/main/attributes/geo/proj/](https://github.com/EOPF-Explorer/data-model/blob/main/attributes/geo/proj/).
