@@ -1,7 +1,7 @@
 # Spatial Convention
 
 - **UUID**: 689b58e2-cf7b-45e0-9fff-9cfc0883d6b4
-- **Name**: 'spatial:'
+- **Name**: "spatial:"
 - **Schema URL**: "<https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json>"
 - **Spec URL**: "<https://github.com/zarr-conventions/spatial/blob/v1/README.md>"
 - **Scope**: Array, Group
