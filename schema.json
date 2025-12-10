@@ -1,7 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Template Convention",
-  "description": "Schema for Template Zarr convention, supporting both key-prefixed and nested namespace patterns",
+  "$id": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+  "title": "Spatial Coordinate Convention (spatial:)",
+  "description": "Schema for spatial coordinate information in Zarr. Properties use the 'spatial:' namespace prefix. This convention defines the relationship between array indices and spatial coordinates.",
   "type": "object",
   "properties": {
     "zarr_format": {
@@ -15,7 +16,7 @@
     },
     "attributes": {
       "type": "object",
-      "description": "Zarr attributes containing convention metadata and properties",
+      "description": "Zarr attributes containing convention metadata and spatial: prefixed properties",
       "properties": {
         "zarr_conventions": {
           "type": "array",
@@ -26,14 +27,7 @@
         }
       },
       "required": ["zarr_conventions"],
-      "oneOf": [
-        {
-          "$ref": "#/$defs/keyPrefixedAttributes"
-        },
-        {
-          "$ref": "#/$defs/nestedAttributes"
-        }
-      ]
+      "$ref": "#/$defs/spatialAttributes"
     }
   },
   "required": ["zarr_format", "node_type", "attributes"],
@@ -41,30 +35,31 @@
   "$defs": {
     "conventionMetadata": {
       "type": "object",
-      "description": "Template convention metadata object for use in zarr_conventions array",
+      "description": "Spatial coordinate convention metadata object for use in zarr_conventions array",
       "properties": {
         "schema_url": {
           "type": "string",
-          "const": "https://raw.githubusercontent.com/zarr-conventions/template/refs/tags/v1/schema.json",
+          "const": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
           "description": "URL to the JSON Schema definition for this convention"
         },
         "spec_url": {
           "type": "string",
-          "const": "https://github.com/zarr-conventions/template/blob/v1/README.md",
+          "const": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
           "description": "URL to the full specification document"
         },
         "uuid": {
           "type": "string",
-          "const": "f010a634-3525-416e-9320-8f44b5bc352c",
+          "const": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
           "description": "UUID that permanently identifies this convention"
         },
         "name": {
           "type": "string",
-          "description": "Human-readable name of the convention. Should be 'template:' for key-prefixed pattern or 'template' for nested pattern"
+          "const": "spatial:",
+          "description": "Human-readable name of the convention with colon to indicate key-prefixing"
         },
         "description": {
           "type": "string",
-          "const": "Template convention for demonstrating Zarr convention metadata structure",
+          "const": "Spatial coordinate information",
           "description": "Brief description of the convention's purpose and usage"
         }
       },
@@ -81,81 +76,145 @@
       ],
       "additionalProperties": false
     },
-    "conventionProperties": {
+    "spatialAttributes": {
       "type": "object",
-      "description": "Template convention properties",
+      "description": "Spatial coordinate properties using spatial: key prefix",
       "properties": {
-        "new_field": {
-          "type": "string",
-          "description": "REQUIRED. Describe the required field..."
-        },
-        "xyz": {
-          "$ref": "#/$defs/xyzObject"
-        },
-        "another_one": {
+        "zarr_conventions": true,
+        "spatial:dimensions": {
           "type": "array",
-          "description": "Array of numeric values",
+          "description": "Names of spatial dimensions [y_name, x_name] or [z_name, y_name, x_name]",
+          "oneOf": [
+            {
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "2D spatial dimensions"
+            },
+            {
+              "minItems": 3,
+              "maxItems": 3,
+              "description": "3D spatial dimensions"
+            }
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "spatial:bbox": {
+          "type": "array",
+          "description": "Bounding box in coordinate space: [xmin, ymin, xmax, ymax] for 2D or [xmin, ymin, zmin, xmax, ymax, zmax] for 3D",
+          "oneOf": [
+            {
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "2D bounding box"
+            },
+            {
+              "minItems": 6,
+              "maxItems": 6,
+              "description": "3D bounding box"
+            }
+          ],
           "items": {
             "type": "number"
           }
-        }
-      },
-      "required": ["new_field"],
-      "additionalProperties": false
-    },
-    "xyzObject": {
-      "type": "object",
-      "description": "XYZ Object containing x, y, z coordinates",
-      "properties": {
-        "x": {
-          "type": "number",
-          "description": "REQUIRED. X coordinate value"
         },
-        "y": {
-          "type": "number",
-          "description": "REQUIRED. Y coordinate value"
-        },
-        "z": {
-          "type": "number",
-          "description": "REQUIRED. Z coordinate value"
-        }
-      },
-      "required": ["x", "y", "z"],
-      "additionalProperties": false
-    },
-    "keyPrefixedAttributes": {
-      "type": "object",
-      "description": "Template convention using key-prefixed pattern (e.g., template:new_field)",
-      "properties": {
-        "zarr_conventions": true,
-        "template:new_field": {
+        "spatial:transform_type": {
           "type": "string",
-          "description": "REQUIRED. Describe the required field..."
+          "description": "Type of transformation used to map array indices to coordinates. Defaults to 'affine' if not specified. Currently defined types: 'affine'. Additional transform types may be defined in future versions (e.g., 'rpc', 'polynomial', 'lookup'). Custom types are allowed for extensibility."
         },
-        "template:xyz": {
-          "$ref": "#/$defs/xyzObject"
-        },
-        "template:another_one": {
+        "spatial:transform": {
           "type": "array",
-          "description": "Array of numeric values",
+          "description": "Affine transformation coefficients mapping array indices to coordinates. Used when transform_type is 'affine' (default). For 2D: [a, b, c, d, e, f] where x = a*i + b*j + c, y = d*i + e*j + f",
+          "oneOf": [
+            {
+              "minItems": 6,
+              "maxItems": 6,
+              "description": "2D affine transform: [a, b, c, d, e, f]"
+            },
+            {
+              "minItems": 9,
+              "maxItems": 9,
+              "description": "3D affine transform (future extension)"
+            }
+          ],
           "items": {
             "type": "number"
           }
+        },
+        "spatial:shape": {
+          "type": "array",
+          "description": "Shape of spatial dimensions [height, width] for 2D or [depth, height, width] for 3D",
+          "oneOf": [
+            {
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "2D spatial shape"
+            },
+            {
+              "minItems": 3,
+              "maxItems": 3,
+              "description": "3D spatial shape"
+            }
+          ],
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "multiscales": {
+          "type": "object",
+          "description": "When composing with multiscales convention, spatial: properties can be added to layout items",
+          "properties": {
+            "layout": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "spatial:shape": {
+                    "type": "array",
+                    "description": "Shape override for this resolution level [height, width]",
+                    "oneOf": [
+                      {
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      {
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    ],
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "spatial:transform": {
+                    "type": "array",
+                    "description": "Transform override for this resolution level",
+                    "oneOf": [
+                      {
+                        "minItems": 6,
+                        "maxItems": 6
+                      },
+                      {
+                        "minItems": 9,
+                        "maxItems": 9
+                      }
+                    ],
+                    "items": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          },
+          "additionalProperties": true
         }
       },
-      "required": ["template:new_field"],
-      "additionalProperties": true
-    },
-    "nestedAttributes": {
-      "type": "object",
-      "description": "Template convention using nested pattern (single 'template' key)",
-      "properties": {
-        "zarr_conventions": true,
-        "template": {
-          "$ref": "#/$defs/conventionProperties"
-        }
-      },
-      "required": ["template"],
+      "required": ["spatial:dimensions"],
       "additionalProperties": true
     }
   }
