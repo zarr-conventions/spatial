@@ -1,107 +1,417 @@
-# Template Convention Metadata
+# Spatial Convention
 
-- **UUID**: f010a634-3525-416e-9320-8f44b5bc352c
-- **Name**: Template
-- **Schema URL**: "https://raw.githubusercontent.com/zarr-conventions/template/refs/tags/v1/schema.json"
-- **Spec URL**: "https://github.com/zarr-conventions/template/blob/v1/README.md"
+- **UUID**: 689b58e2-cf7b-45e0-9fff-9cfc0883d6b4
+- **Name**: 'spatial:'
+- **Schema URL**: "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json"
+- **Spec URL**: "https://github.com/zarr-conventions/spatial/blob/v1/README.md"
 - **Scope**: Array, Group
 - **Extension Maturity Classification****: Proposal
-- **Owner**: @your-github-handle, @another-github-handle
+- **Owner**: @maxrjones, emmanuelmathot
 
-The document explains the Template convention, which is a Zarr convention metadata. This is the place to add a short introduction.
+## Description
 
-- Examples:
-    - [Convention metadata only](examples/minimal_example.json)
-    - [Key-prefixed pattern (recommended)](examples/key_prefixed_example.json)
-    - [Nested pattern](examples/nested_example.json)
+This Zarr Convention defines metadata for describing the relationship between array indices and spatial coordinates. All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level following the [Zarr Conventions Specification](https://github.com/zarr-conventions/zarr-conventions-spec).
 
-## Convention Attributes
+This convention is designed to be composable with other conventions:
 
-This convention defines attributes that appear at the root level of the Zarr `attributes` object. The convention can be used in these parts of the Zarr hierarchy:
+- Use with a `proj:` convention to add coordinate reference system (CRS) information for geospatial data
+- Use with `multiscales` to define spatial properties at different resolution levels
+- Use standalone for non-geospatial data that has spatial relationships (e.g., microscopy, medical imaging)
+
+Examples:
+
+- [composition with proj](examples/proj.json)
+- [composition with multiscales](examples/multiscales.json)
+
+## Motivation
+
+- **Modular design**: Separates spatial coordinate information from CRS definitions, allowing each to be used independently
+- **Broad applicability**: Useful for both geospatial and non-geospatial data with spatial relationships
+- **Simplicity**: No complex inheritance or override mechanisms needed
+- **Interoperability**: Compatible with existing geospatial tools (GDAL, rasterio) when composed with CRS information
+- **Composability**: Can extend other conventions like multiscales with spatial-specific properties
+
+## Convention Registration
+
+The convention must be registered in `zarr_conventions`:
+
+```json
+{
+  "zarr_conventions": [
+    {
+      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+      "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+      "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+      "name": "spatial:",
+      "description": "Spatial coordinate information"
+    }
+  ]
+}
+```
+
+## Applicable To
+
+This convention can be used with these parts of the Zarr hierarchy:
 
 - [x] Group
 - [x] Array
 
-### Namespace Patterns
+## Properties
 
-To avoid attribute name collisions with other conventions, this convention supports two patterns:
+All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level.
 
-#### 1. Key-Prefixed Pattern (Recommended)
+|Property|Type|Description|Required|Reference|
+|---|---|---|---|---|
+|**spatial:dimensions**|`string[]`|Names of spatial dimensions (e.g., ["y", "x"])|Yes|[spatial:dimensions](#spatialdimensions)|
+|**spatial:bbox**|`number[]`|Bounding box in coordinate space|No|[spatial:bbox](#spatialbbox)|
+|**spatial:transform_type**|`string`|Type of coordinate transformation (default: "affine")|No|[spatial:transform_type](#spatialtransform_type)|
+|**spatial:transform**|`number[]`|Affine transformation coefficients|No|[spatial:transform](#spatialtransform)|
+|**spatial:shape**|`number[]`|Shape of spatial dimensions [height, width]|No|[spatial:shape](#spatialshape)|
 
-Individual attributes are prefixed with `template:`. This is the recommended approach as it enables better composability - other conventions can extend objects defined by this convention.
 
-**Convention metadata name**: `template:`
+### Field Details
 
-| Field Name           | Type                      | Description                                  |
-| -------------------- | ------------------------- | -------------------------------------------- |
-| template:new_field   | string                    | **REQUIRED**. Describe the required field... |
-| template:xyz         | [XYZ Object](#xyz-object) | Describe the field...                        |
-| template:another_one | \[number]                 | Describe the field...                        |
+Additional properties are allowed.
 
-**Example**:
+#### spatial:dimensions
+
+Names of spatial dimensions
+
+* **Type**: `string[]`
+* **Required**: Yes
+
+Identifies which dimensions in the Zarr array correspond to spatial axes. This is particularly useful when arrays have multiple dimensions (e.g., time, bands, y, x).
+
+For 2D spatial data, provide 2 elements in row-major order: `["y", "x"]`
+For 3D spatial data, provide 3 elements: `["z", "y", "x"]`
+
+The dimension names must match the dimension names defined in the array's shape.
+
+#### spatial:bbox
+
+Bounding box in coordinate space
+
+* **Type**: `number[]`
+* **Required**: No
+
+Bounding box of the spatial extent in the coordinate space. The length of the array must be 2*n where n is the number of spatial dimensions.
+
+For 2D spatial data: `[xmin, ymin, xmax, ymax]` (4 elements)
+For 3D spatial data: `[xmin, ymin, zmin, xmax, ymax, zmax]` (6 elements)
+
+The coordinates represent the minimum and maximum values along each spatial axis. The interpretation of these coordinates depends on any associated coordinate reference system (e.g., from a `proj:` convention) or can represent abstract spatial units.
+
+#### spatial:transform_type
+
+Type of coordinate transformation
+
+* **Type**: `string`
+* **Required**: No
+* **Default**: `"affine"`
+
+Specifies the type of transformation used to map array indices to spatial coordinates. This property enables support for various transformation models.
+
+**Currently defined types:**
+
+- `"affine"`: Affine transformation using `spatial:transform` coefficients (default if omitted)
+
+**Future extensibility**: Additional transform types may be defined in future versions of this convention (e.g., `"rpc"` for Rational Polynomial Coefficients, `"polynomial"`, `"lookup"` for coordinate arrays). Custom transformation types are allowed for domain-specific use cases.
+
+When `spatial:transform_type` is omitted, implementations MUST assume `"affine"` for backwards compatibility. Implementations encountering unknown transform types SHOULD handle them gracefully (e.g., warn or skip processing rather than fail).
+
+#### spatial:transform
+
+Affine transformation coefficients
+
+* **Type**: `number[6]`
+* **Required**: No (but required when `spatial:transform_type` is `"affine"` or omitted)
+
+Mapping from array index space to coordinate space that preserves points, straight lines, and ratios, including scaling, rotating, or translating. Used when `spatial:transform_type` is `"affine"` or omitted (default behavior).
+
+For 2D spatial data: 6 elements `[a, b, c, d, e, f]`, since the last row is `0,0,1` it can be omitted such than only 6 elements are recording.
+
+The 2D transformation maps array indices (i, j) to spatial coordinates (x, y) according to:
+
+```txt
+  [x]   [a, b, c]   [i]
+  [y] = [d, e, f] * [j]
+  [1]   [0, 0, 1]   [1]
+```
+
+Which expands to:
+- `x = a*i + b*j + c`
+- `y = d*i + e*j + f`
+
+Where:
+- `a`: pixel width (w-e pixel resolution)
+- `b`: row rotation (typically 0)
+- `c`: x-coordinate of the upper-left corner of the upper-left pixel
+- `d`: column rotation (typically 0)
+- `e`: pixel height (n-s pixel resolution, negative value for north-up images)
+- `f`: y-coordinate of the upper-left corner of the upper-left pixel
+
+**Coordinate convention:**
+
+The transform operates on array indices where `(0, 0)` is at the **top-left corner** of the top-left pixel, and `(width, height)` is at the bottom-right corner of the bottom-right pixel. The center of the top-left pixel is at `(0.5, 0.5)`.
+
+This follows the GDAL geotransform and Python's Affine library convention.
+
+Note: Rasterio's `xy()` and `rowcol()` methods automatically add/subtract 0.5 to convert between pixel coordinates and corner coordinates. For example, `transformer.xy(0, 0)` is equivalent to applying this transform to `(0.5, 0.5)`, giving the coordinate at the center of the first pixel.
+
+**Coefficient ordering:**
+
+This format uses the Rasterio/Affine coefficient ordering: `[a, b, c, d, e, f]`
+
+This is the same ordering used by:
+- Rasterio's `Affine` transformation and `.transform` attribute
+- Python's `affine` library
+- The matrix form commonly used in geospatial Python libraries
+
+GDAL's `GetGeoTransform` uses a different order: `[c, a, b, f, d, e]` or `[GT(0), GT(1), GT(2), GT(3), GT(4), GT(5)]`
+
+**Converting between formats:**
+```python
+# From GDAL GetGeoTransform to spatial:transform
+gdal_gt = src.GetGeoTransform()  # [GT(0), GT(1), GT(2), GT(3), GT(4), GT(5)]
+spatial_transform = [gdal_gt[1], gdal_gt[2], gdal_gt[0],
+                     gdal_gt[4], gdal_gt[5], gdal_gt[3]]
+
+# From Rasterio Affine to spatial:transform
+from affine import Affine
+affine_transform = src.transform  # Affine object
+spatial_transform = list(affine_transform)[:6]  # Direct conversion
+```
+
+#### spatial:shape
+
+Shape of spatial dimensions
+
+* **Type**: `integer[]`
+* **Required**: No
+
+Specifies the dimensions of the spatial axes in array index units.
+
+For 2D spatial data: `[height, width]` corresponding to `[y, x]` (2 elements)
+For 3D spatial data: `[depth, height, width]` corresponding to `[z, y, x]` (3 elements)
+
+This property is particularly useful when:
+- The spatial shape differs from the full array shape (e.g., when the array includes non-spatial dimensions)
+- Used with multiscales convention to specify shape at different resolution levels
+- Documenting the spatial extent explicitly
+
+## Examples
+
+### Basic Array Example with Spatial Convention Only
+
+For non-geospatial data or when CRS is not needed:
+
 ```json
 {
+  "zarr_format": 3,
+  "node_type": "array",
   "attributes": {
     "zarr_conventions": [
-      { "name": "template:", "spec_url": "..." }
+      {
+        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+        "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+        "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+        "name": "spatial:",
+        "description": "Spatial coordinate information"
+      }
     ],
-    "template:new_field": "example value",
-    "template:xyz": { "x": 1.0, "y": 2.0, "z": 3.0 }
+    "spatial:dimensions": ["y", "x"],
+    "spatial:shape": [1024, 1024],
+    "spatial:transform": [1.0, 0.0, 0.0, 0.0, -1.0, 1024.0],
+    "spatial:bbox": [0.0, 0.0, 1024.0, 1024.0]
   }
 }
 ```
 
-#### 2. Nested Pattern
+### Composition with proj: Convention
 
-All convention properties are nested under a single `template` key.
+For geospatial data, combine `spatial:` with `proj:` for complete coordinate information:
 
-**Convention metadata name**: `template`
-
-| Field Name           | Type                      | Description                                  |
-| -------------------- | ------------------------- | -------------------------------------------- |
-| template             | [Template Object](#template-object) | **REQUIRED**. Template convention properties |
-
-**Example**:
 ```json
 {
+  "zarr_format": 3,
+  "node_type": "array",
   "attributes": {
     "zarr_conventions": [
-      { "name": "template", "spec_url": "..." }
+      {
+        "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
+        "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+        "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
+        "name": "proj:",
+        "description": "Coordinate reference system information for geospatial data"
+      },
+      {
+        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+        "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+        "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+        "name": "spatial:",
+        "description": "Spatial coordinate information"
+      }
     ],
-    "template": {
-      "new_field": "example value",
-      "xyz": { "x": 1.0, "y": 2.0, "z": 3.0 }
+    "proj:code": "EPSG:3857",
+    "spatial:dimensions": ["Y", "X"],
+    "spatial:bbox": [
+      -20037508.342789244,
+      -20037508.342789244,
+      20037508.342789244,
+      20037508.342789244
+    ],
+    "spatial:transform": [
+      156543.03392804097,
+      0.0,
+      -20037508.342789244,
+      0.0,
+      -156543.03392804097,
+      20037508.342789244
+    ]
+  }
+}
+```
+
+### Composability with Multiscales
+
+The spatial: convention can extend multiscales layouts by adding spatial properties to individual resolution levels:
+
+```json
+{
+  "zarr_conventions": [
+    {
+      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/multiscales/refs/tags/v1/schema.json",
+      "spec_url": "https://github.com/zarr-conventions/multiscales/blob/v1/README.md",
+      "uuid": "d35379db-88df-4056-af3a-620245f8e347",
+      "name": "multiscales",
+      "description": "Multiscale layout of zarr datasets"
+    },
+    {
+      "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
+      "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+      "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
+      "name": "proj:",
+      "description": "Coordinate reference system information for geospatial data"
+    },
+    {
+      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+      "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+      "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+      "name": "spatial:",
+      "description": "Spatial coordinate information"
     }
-  }
+  ],
+  "multiscales": {
+    "layout": [
+      {
+        "asset": "r10m",
+        "transform": {
+          "scale": [1.0, 1.0],
+          "translation": [0.0, 0.0]
+        },
+        "spatial:shape": [1200, 1200],
+        "spatial:transform": [10.0, 0.0, 500000.0, 0.0, -10.0, 5000000.0]
+      },
+      {
+        "asset": "r20m",
+        "derived_from": "r10m",
+        "transform": {
+          "scale": [2.0, 2.0],
+          "translation": [0.0, 0.0]
+        },
+        "spatial:shape": [600, 600],
+        "spatial:transform": [20.0, 0.0, 500000.0, 0.0, -20.0, 5000000.0]
+      }
+    ]
+  },
+  "proj:code": "EPSG:32633",
+  "spatial:dimensions": ["Y", "X"],
+  "spatial:bbox": [500000.0, 4900000.0, 600000.0, 5000000.0]
 }
 ```
 
-### Template Object
+In this example:
 
-When using the nested pattern, all properties are contained in the `template` object:
+- The group-level `proj:code` defines the CRS for all resolution levels
+- The group-level `spatial:dimensions` and `spatial:bbox` apply to all resolution levels
+- Each layout item has its own `spatial:shape` and `spatial:transform` specific to that resolution
+- The multiscales convention defines the relative transformations between levels via the `transform` object
+- This enables efficient storage of multi-resolution geospatial data with proper georeferencing at each level
+- Note how CRS information (`proj:`) is separated from spatial coordinate information (`spatial:`)
 
-| Field Name   | Type                      | Description                                  |
-| ------------ | ------------------------- | -------------------------------------------- |
-| new_field    | string                    | **REQUIRED**. Describe the required field... |
-| xyz          | [XYZ Object](#xyz-object) | Describe the field...                        |
-| another_one  | \[number]                 | Describe the field...                        |
+See [examples/multiscales.json](examples/multiscales.json) for a complete example.
 
-### Additional Field Information
+## FAQ
 
-#### new_field (template:new_field or template.new_field)
+### Why are spatial: and proj: separate conventions?
 
-This is a much more detailed description of the field `new_field`...
+As explained in the [rasterio documentation](https://rasterio.readthedocs.io/): "There are two parts to the georeferencing of raster datasets: the definition of the local, regional, or global system in which a raster's pixels are located; and the parameters by which pixel coordinates are transformed into coordinates in that system."
 
-### XYZ Object
+This fundamental distinction motivated the design decision ([zarr-conventions issue #9](https://github.com/zarr-conventions/zarr-conventions/issues/9)) to separate these concerns into two conventions:
 
-This is the introduction for the purpose and the content of the XYZ Object...
+1. **`proj:`** - Defines the coordinate reference system (CRS): the "local, regional, or global system" using EPSG codes, WKT2, or PROJJSON
+2. **`spatial:`** - Defines the coordinate transformation: the "parameters by which pixel coordinates are transformed" including transform matrices, bounding boxes, and dimension mappings
 
-| Field Name | Type   | Description                                  |
-| ---------- | ------ | -------------------------------------------- |
-| x          | number | **REQUIRED**. Describe the required field... |
-| y          | number | **REQUIRED**. Describe the required field... |
-| z          | number | **REQUIRED**. Describe the required field... |
+This separation provides several benefits:
+
+- **Broader applicability**: Bounds and transforms are useful beyond geospatial data (microscopy, medical imaging)
+- **Simpler model**: No need for complex inheritance or override mechanisms - CRS can be defined at group level, while spatial coordinates vary per array
+- **Cleaner conceptual model**: Each convention has a single, well-defined purpose
+- **Tool interoperability**: Non-geospatial tools can use spatial coordinates without understanding CRS specifications
+- **Modular composition**: Each convention can evolve independently
+
+### How does this compare to the STAC Projection Extension?
+
+The STAC Projection Extension combines CRS and spatial coordinate information in a single extension. This spatial convention takes a different approach:
+
+- **STAC approach**: Single `proj:` extension with both CRS (`proj:epsg`, `proj:wkt2`) and coordinates (`proj:bbox`, `proj:transform`)
+- **This approach**: Separate conventions - `proj:` for CRS, `spatial:` for coordinates
+
+Both approaches are valid. The separated approach prioritizes modularity and broader applicability, while STAC prioritizes simplicity for the geospatial-only use case.
+
+### Can I use spatial: without proj:?
+
+Yes! The `spatial:` convention is useful on its own for:
+
+- Non-geospatial data with spatial relationships (microscopy, medical imaging)
+- Data where coordinates are in abstract units
+- Workflows that don't need formal CRS definitions
+- Cases where CRS information is managed separately
+
+### Can I use spatial: at the group level?
+
+Yes, `spatial:` properties can be defined at both group and array levels. When defined at the group level:
+
+- Properties apply to direct child arrays that don't define their own `spatial:` properties
+- This is useful when multiple arrays share the same spatial coordinate system
+- Arrays can define their own `spatial:` properties to override or supplement group-level definitions
+
+This is particularly useful with multiscales, where the CRS (`proj:`) is shared but spatial properties (`spatial:shape`, `spatial:transform`) vary per resolution level.
+
+### What's required when using spatial: with proj:?
+
+When composing `spatial:` with a `proj:` convention:
+
+- Both conventions must be listed in `zarr_conventions`
+- `spatial:dimensions` must be provided to identify which array dimensions are spatial
+- The coordinate values in `spatial:bbox` and `spatial:transform` should be in the coordinate system defined by `proj:`
+- For geospatial compatibility, follow standard axis ordering conventions (typically Y, X or Z, Y, X)
+
+### How does the convention support different transformation types?
+
+The `spatial:transform_type` property enables extensibility for different coordinate transformation models:
+
+- **Current support**: Only `"affine"` transformations are currently defined
+- **Default behavior**: When `spatial:transform_type` is omitted, affine transformation is assumed for backwards compatibility
+- **Future extensions**: Additional transform types (e.g., RPC, polynomial, lookup tables) can be added in future versions without breaking existing implementations
+- **Custom types**: Domain-specific transform types are allowed for specialized use cases
+- **Forward compatibility**: The convention does not use a fixed enum, allowing new transform types to be added without invalidating old schemas
+
+Implementations should handle unknown transform types gracefully (warn or skip) rather than failing, ensuring forward compatibility as new transform types are standardized.
 
 ## Acknowledgements
 
-This template is based on the [STAC extensions template](https://github.com/stac-extensions/template/blob/main/README.md).
+The template is based on the [STAC extensions template](https://github.com/stac-extensions/template/blob/main/README.md).
+
+The convention was copied and modified from  
+https://github.com/zarr-developers/zarr-extensions/pull/21 and [https://github.com/EOPF-Explorer/data-model/blob/main/attributes/geo/proj/](https://github.com/EOPF-Explorer/data-model/blob/main/attributes/geo/proj/).
