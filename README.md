@@ -5,7 +5,7 @@
 - **Schema URL**: "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json"
 - **Spec URL**: "https://github.com/zarr-conventions/spatial/blob/v1/README.md"
 - **Scope**: Array, Group
-- **Extension Maturity Classification****: Proposal
+- **Extension Maturity Classification**: Proposal
 - **Owner**: @maxrjones, emmanuelmathot
 
 ## Description
