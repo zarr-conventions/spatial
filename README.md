@@ -60,13 +60,14 @@ This convention can be used with these parts of the Zarr hierarchy:
 
 All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level.
 
-| Property                   | Type       | Description                                           | Required | Reference                                        |
-| -------------------------- | ---------- | ----------------------------------------------------- | -------- | ------------------------------------------------ |
-| **spatial:dimensions**     | `string[]` | Names of spatial dimensions (e.g., ["y", "x"])        | Yes      | [spatial:dimensions](#spatialdimensions)         |
-| **spatial:bbox**           | `number[]` | Bounding box in coordinate space                      | No       | [spatial:bbox](#spatialbbox)                     |
-| **spatial:transform_type** | `string`   | Type of coordinate transformation (default: "affine") | No       | [spatial:transform_type](#spatialtransform_type) |
-| **spatial:transform**      | `number[]` | Affine transformation coefficients                    | No       | [spatial:transform](#spatialtransform)           |
-| **spatial:shape**          | `number[]` | Shape of spatial dimensions [height, width]           | No       | [spatial:shape](#spatialshape)                   |
+| Property                   | Type       | Description                                                         | Required | Reference                                        |
+| -------------------------- | ---------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
+| **spatial:dimensions**     | `string[]` | Names of spatial dimensions (e.g., ["y", "x"])                      | Yes      | [spatial:dimensions](#spatialdimensions)         |
+| **spatial:bbox**           | `number[]` | Bounding box in coordinate space                                    | No       | [spatial:bbox](#spatialbbox)                     |
+| **spatial:transform_type** | `string`   | Type of coordinate transformation (default: "affine")               | No       | [spatial:transform_type](#spatialtransform_type) |
+| **spatial:transform**      | `number[]` | Affine transformation coefficients                                  | No       | [spatial:transform](#spatialtransform)           |
+| **spatial:shape**          | `number[]` | Shape of spatial dimensions [height, width]                         | No       | [spatial:shape](#spatialshape)                   |
+| **spatial:registration**   | `string`   | Grid cell registration (i.e., raster space) type (default: "pixel") | No       | [spatial:registration](#spatialregistration)     |
 
 ### Field Details
 
@@ -203,6 +204,60 @@ This property is particularly useful when:
 - Used with multiscales convention to specify shape at different resolution levels
 - Documenting the spatial extent explicitly
 
+#### spatial:registration
+
+Grid cell registration type
+
+- **Type**: `string`
+- **Required**: No
+- **Default**: `"pixel"`
+- **Valid values**: `"node"` or `"pixel"`
+
+Specifies whether the grid uses node registration (grid-registered) or pixel registration (cell-registered). This property is particularly important for grids where the interpretation of coordinate ranges differs between registration types.
+
+**Node Registration (grid/node):**
+
+Node-registered grids have cells centered on the grid-lines. The coordinate ranges (`spatial:bbox` and `spatial:transform`) refer to the centers of the cells on the outside border of the grid, and the footprints of the cells extend 1/2 cell width outside these ranges.
+
+- Cells are centered on coordinate points
+- Commonly used for discrete point data representation
+- A global grid will have cells centered directly on the North and South Poles
+- Has one more row and one more column than a pixel-registered grid with identical range
+
+**Pixel Registration (cell/pixel):**
+
+Pixel-registered grids have cells lying between the grid-lines. The coordinate ranges refer to the outside edges of the boundaries of the grid.
+
+- Cell boundaries align with coordinate points
+- Commonly used in images to prevent edge pixels from being cut in half
+- A global grid will touch the edges of the poles without covering their centers
+- Each cell in one registration overlaps quadrants of four cells in the corresponding node-registration
+
+**Important considerations:**
+
+- Converting between registration types results in relief flattening, as each cell in one registration overlies corners of four cells in the other
+- The conversion process averages values, reducing local highs and raising local deeps
+- Most grid applications recognize both types, but misidentifying the registration can shift cell locations and data
+- This property helps tools correctly interpret the relationship between array indices and spatial coordinates
+
+When `spatial:registration` is omitted, implementations MUST assume `"pixel"` registration for backwards compatibility.
+
+**Relationship to other formats:**
+
+This property corresponds to similar concepts in other geospatial formats:
+
+- **GeoTIFF**: `"pixel"` = PixelIsArea (default), `"node"` = PixelIsPoint
+- **GMT**: `"pixel"` = pixel registration, `"node"` = gridline registration
+- **NetCDF-CF**: Related to the interpretation of coordinate bounds
+
+**References:**
+
+For more detailed information on grid cell registration concepts:
+
+- NOAA NCEI: [Grid Cell Registration](https://www.ncei.noaa.gov/products/grid-cell-registration)
+- GMT Documentation: [Grid registration](https://docs.generic-mapping-tools.org/6.4/cookbook/options.html#option-nodereg)
+- GeoTIFF Specification: [Section 2.5.2.2 Raster Space](http://docs.opengeospatial.org/is/19-008r4/19-008r4.html#_raster_space)
+
 ## Examples
 
 ### Basic Array Example with Spatial Convention Only
@@ -226,10 +281,42 @@ For non-geospatial data or when CRS is not needed:
     "spatial:dimensions": ["y", "x"],
     "spatial:shape": [1024, 1024],
     "spatial:transform": [1.0, 0.0, 0.0, 0.0, -1.0, 1024.0],
-    "spatial:bbox": [0.0, 0.0, 1024.0, 1024.0]
+    "spatial:bbox": [0.0, 0.0, 1024.0, 1024.0],
+    "spatial:registration": "pixel"
   }
 }
 ```
+
+### DEM with Node Registration
+
+For a Digital Elevation Model using node registration (grid-registered):
+
+```json
+{
+  "zarr_format": 3,
+  "node_type": "array",
+  "attributes": {
+    "zarr_conventions": [
+      {
+        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+        "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+        "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+        "name": "spatial:",
+        "description": "Spatial coordinate information"
+      }
+    ],
+    "spatial:dimensions": ["y", "x"],
+    "spatial:shape": [3601, 3601],
+    "spatial:transform": [
+      0.000277777778, 0.0, -180.0, 0.0, -0.000277777778, 90.0
+    ],
+    "spatial:bbox": [-180.0, -90.0, 180.0, 90.0],
+    "spatial:registration": "node"
+  }
+}
+```
+
+In this example, the grid has 3601 x 3601 cells covering -180° to 180° longitude and -90° to 90° latitude. With node registration, cells are centered on the coordinate points, including cells centered exactly on the North Pole (90°) and South Pole (-90°). The cell footprints extend 1/2 cell width (approximately 0.00013889°) beyond these ranges.
 
 ### Composition with proj: Convention
 
@@ -406,6 +493,44 @@ The `spatial:transform_type` property enables extensibility for different coordi
 - **Forward compatibility**: The convention does not use a fixed enum, allowing new transform types to be added without invalidating old schemas
 
 Implementations should handle unknown transform types gracefully (warn or skip) rather than failing, ensuring forward compatibility as new transform types are standardized.
+
+### How does spatial:registration relate to GeoTIFF PixelIsArea/PixelIsPoint?
+
+The `spatial:registration` property directly maps to GeoTIFF's raster space concepts:
+
+- **`spatial:registration: "pixel"`** (default) = **GeoTIFF PixelIsArea**: Pixels represent areas/cells with boundaries at coordinate points. An N×M image covers bounds (0,0) to (N,M).
+
+- **`spatial:registration: "node"`** = **GeoTIFF PixelIsPoint**: Pixel values are point measurements at coordinate locations. An N×M image covers bounds (0,0) to (N-1,M-1).
+
+When converting GeoTIFF data to Zarr, use `spatial:registration: "node"` for PixelIsPoint GeoTIFFs and `spatial:registration: "pixel"` (or omit it) for PixelIsArea GeoTIFFs.
+
+### When should I use node vs pixel registration?
+
+The choice between node and pixel registration depends on your data type and how it should be interpreted:
+
+**Use node registration when:**
+
+- Representing discrete point measurements (e.g., weather station data interpolated to a grid)
+- Working with Digital Elevation Models where elevation values represent specific coordinate points
+- You need cells centered on specific coordinate values (e.g., cells at exactly 0°, 1°, 2° longitude)
+- Converting from point data to a gridded format
+- Converting GeoTIFF data with PixelIsPoint
+- Working with data formats that traditionally use grid registration (e.g., some GMT gridline grids, NetCDF grids)
+
+**Use pixel registration when:**
+
+- Working with imagery or raster data where pixels represent areas
+- Cell boundaries need to align with specific coordinate values
+- Processing data where edge pixels should not be cut in half at boundaries
+- Converting GeoTIFF data with PixelIsArea (the GeoTIFF default)
+- Working with formats that traditionally use cell registration (e.g., most GeoTIFFs, COG)
+- Composing with the multiscales convention for image pyramids
+
+**Important notes:**
+
+- A node-registered grid with shape [n, m] covering the same extent as a pixel-registered grid will have one more row and column
+- For example, a 1° global grid: node registration would be 181 x 361 (cells at -90° to 90° and -180° to 180°), while pixel registration would be 180 x 360 (cells between these values)
+- When in doubt, use pixel registration (the default) as it's more common for imagery and prevents edge artifacts
 
 ## Acknowledgements
 
