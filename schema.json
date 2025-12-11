@@ -162,6 +162,11 @@
             "minimum": 1
           }
         },
+        "spatial:registration": {
+          "type": "string",
+          "description": "Grid cell registration type. 'node' (grid-registered) means cells are centered on coordinate points with footprints extending 1/2 cell width outside the range. 'pixel' (cell-registered) means cell boundaries align with coordinate points. Defaults to 'pixel' if not specified.",
+          "enum": ["node", "pixel"]
+        },
         "multiscales": {
           "type": "object",
           "description": "When composing with multiscales convention, spatial: properties can be added to layout items",
