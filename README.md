@@ -411,7 +411,7 @@ The spatial: convention can extend multiscales layouts by adding spatial propert
   },
   "proj:code": "EPSG:32633",
   "spatial:dimensions": ["Y", "X"],
-  "spatial:bbox": [500000.0, 4900000.0, 600000.0, 5000000.0]
+  "spatial:bbox": [500000.0, 4988000.0, 512000.0, 5000000.0]
 }
 ```
 
@@ -423,6 +423,24 @@ In this example:
 - The multiscales convention defines the relative transformations between levels via the `transform` object
 - This enables efficient storage of multi-resolution geospatial data with proper georeferencing at each level
 - Note how CRS information (`proj:`) is separated from spatial coordinate information (`spatial:`)
+
+**Transform parameter interpretation with spatial:**
+
+The multiscales convention defines transformations between resolution levels using the formula:
+
+```
+X_current = X_source × scale + translation
+```
+
+This is a domain-agnostic affine transformation (scale followed by translation). When composing with the `spatial:` convention, the interpretation depends on `spatial:registration`:
+
+When `spatial:registration` is `"pixel"` (the default), the pixel origin is defined by the `spatial:transform` (coefficients `c` and `f`) or `spatial:bbox` at each layout level. For standard geospatial overviews where all resolution levels share the same coordinate origin, the multiscales `translation` should be `[0.0, 0.0]`—only the pixel resolution (scale) changes between levels.
+
+The `spatial:transform` origin coordinates (`c`, `f`) remain constant across levels, while the pixel size (`a`, `e`) varies according to the resolution. Implementations must ensure consistency: if a level has `"scale": [2.0, 2.0]` relative to the base, its `spatial:transform` pixel dimensions should be twice those of the base level.
+
+Non-zero translation values are valid when there are actual spatial offsets between levels (e.g., cropped extents), but this is uncommon for georeferenced image pyramids.
+
+**Recommendation:** When composing with multiscales, it is highly recommended to specify `spatial:transform` and `spatial:shape` explicitly at each layout level. This ensures unambiguous georeferencing and avoids relying on derived calculations from multiscales transform parameters.
 
 See [examples/multiscales.json](examples/multiscales.json) for a complete example.
 
