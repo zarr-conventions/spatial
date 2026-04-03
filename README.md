@@ -130,18 +130,18 @@ Mapping from array index space to coordinate space that preserves points, straig
 
 For 2D spatial data: 6 elements `[a, b, c, d, e, f]`, since the last row is `0,0,1` it can be omitted such than only 6 elements are recording.
 
-The 2D transformation maps array indices (i, j) to spatial coordinates (x, y) according to:
+The 2D transformation maps array indices (col_index, row_index) to spatial coordinates (x, y) according to:
 
 ```txt
-  [x]   [a, b, c]   [i]
-  [y] = [d, e, f] * [j]
-  [1]   [0, 0, 1]   [1]
+  [x]   [a, b, c]   [col_index]
+  [y] = [d, e, f] * [row_index]
+  [1]   [0, 0, 1]   [    1    ]
 ```
 
 Which expands to:
 
-- `x = a*i + b*j + c`
-- `y = d*i + e*j + f`
+- `x = a*col_index + b*row_index + c`
+- `y = d*col_index + e*row_index + f`
 
 Where:
 

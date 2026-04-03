@@ -125,7 +125,7 @@
         },
         "spatial:transform": {
           "type": "array",
-          "description": "Affine transformation coefficients mapping array indices to coordinates. Used when transform_type is 'affine' (default). For 2D: [a, b, c, d, e, f] where x = a*i + b*j + c, y = d*i + e*j + f",
+          "description": "Affine transformation coefficients mapping array indices to coordinates. Used when transform_type is 'affine' (default). For 2D: [a, b, c, d, e, f] where x = a*col_index + b*row_index + c, y = d*col_index + e*row_index + f",
           "oneOf": [
             {
               "minItems": 6,
