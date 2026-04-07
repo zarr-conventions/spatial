@@ -169,7 +169,7 @@
         },
         "multiscales": {
           "type": "object",
-          "description": "When composing with multiscales convention, spatial: properties can be added to layout items",
+          "description": "When composing with multiscales convention, spatial: properties must be added to every layout item. spatial:transform is required on all layout items to unambiguously define the coordinate transformation for each resolution level.",
           "properties": {
             "layout": {
               "type": "array",
@@ -178,7 +178,7 @@
                 "properties": {
                   "spatial:shape": {
                     "type": "array",
-                    "description": "Shape override for this resolution level [height, width]",
+                    "description": "Shape of spatial dimensions for this resolution level [height, width] or [depth, height, width]",
                     "oneOf": [
                       {
                         "minItems": 2,
@@ -196,7 +196,7 @@
                   },
                   "spatial:transform": {
                     "type": "array",
-                    "description": "Transform override for this resolution level",
+                    "description": "Affine transform for this resolution level mapping array indices to coordinates. Required on every layout item when using multiscales with this convention.",
                     "oneOf": [
                       {
                         "minItems": 6,
@@ -212,6 +212,7 @@
                     }
                   }
                 },
+                "required": ["spatial:transform"],
                 "additionalProperties": true
               }
             }
@@ -220,6 +221,20 @@
         }
       },
       "required": ["spatial:dimensions"],
+      "if": {
+        "properties": {
+          "multiscales": {
+            "required": ["layout"]
+          }
+        },
+        "required": ["multiscales"]
+      },
+      "then": {
+        "description": "When multiscales.layout is present, spatial:transform must not appear at the root attributes level. Each layout item must carry its own spatial:transform instead.",
+        "not": {
+          "required": ["spatial:transform"]
+        }
+      },
       "additionalProperties": true
     }
   }
