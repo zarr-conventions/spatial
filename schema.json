@@ -230,9 +230,12 @@
         "required": ["multiscales"]
       },
       "then": {
-        "description": "When multiscales.layout is present, spatial:transform must not appear at the root attributes level. Each layout item must carry its own spatial:transform instead.",
+        "description": "When multiscales.layout is present, spatial:transform and spatial:shape must not appear at the root attributes level. Each layout item must carry its own values instead.",
         "not": {
-          "required": ["spatial:transform"]
+          "anyOf": [
+            { "required": ["spatial:transform"] },
+            { "required": ["spatial:shape"] }
+          ]
         }
       },
       "additionalProperties": true
