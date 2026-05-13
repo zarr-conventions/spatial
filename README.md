@@ -62,7 +62,7 @@ All properties use the `spatial:` namespace prefix and are placed at the root `a
 
 | Property                   | Type       | Description                                                         | Required | Reference                                        |
 | -------------------------- | ---------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
-| **spatial:dimensions**     | `string[]` | Names of spatial dimensions (e.g., ["y", "x"])                      | Yes      | [spatial:dimensions](#spatialdimensions)         |
+| **spatial:dimensions**     | `string[]` | Names of spatial dimensions (e.g., ["y", "x"])                      | Arrays only (required on arrays, forbidden on groups) | [spatial:dimensions](#spatialdimensions)         |
 | **spatial:bbox**           | `number[]` | Bounding box in coordinate space                                    | No       | [spatial:bbox](#spatialbbox)                     |
 | **spatial:transform_type** | `string`   | Type of coordinate transformation (default: "affine")               | No       | [spatial:transform_type](#spatialtransform_type) |
 | **spatial:transform**      | `number[]` | Affine transformation coefficients                                  | No       | [spatial:transform](#spatialtransform)           |
@@ -75,17 +75,18 @@ Additional properties are allowed.
 
 #### spatial:dimensions
 
-Names of spatial dimensions
+Names of the array dimensions that are spatial.
 
 - **Type**: `string[]`
-- **Required**: Yes
+- **Required**: On arrays only. Forbidden on groups (see [Can I use spatial: at the group level?](#can-i-use-spatial-at-the-group-level)).
 
-Identifies which dimensions in the Zarr array correspond to spatial axes. This is particularly useful when arrays have multiple dimensions (e.g., time, bands, y, x).
+Identifies which of the array's dimensions correspond to spatial axes. This is particularly useful when arrays have non-spatial dimensions as well (e.g., time, bands, y, x).
 
-For 2D spatial data, provide 2 elements in row-major order: `["y", "x"]`
-For 3D spatial data, provide 3 elements: `["z", "y", "x"]`
+Each entry in `spatial:dimensions` MUST match one of the names declared in the array's [`dimension_names`](https://github.com/zarr-developers/zarr-specs/blob/main/docs/v3/core/index.rst#dimension_names) metadata field (a top-level field of the Zarr V3 array metadata, not an attribute). Arrays using this convention MUST therefore declare `dimension_names`.
 
-The dimension names must match the dimension names defined in the array's shape.
+Matching is **by name, not by position**: the order of entries in `spatial:dimensions` is not significant for identifying which dimensions are spatial. Conventions that consume this list (e.g., for axis ordering in `spatial:transform` or `spatial:shape`) define their own ordering rules.
+
+For 2D spatial data, provide 2 entries, e.g. `["y", "x"]`.
 
 #### spatial:bbox
 
@@ -268,6 +269,7 @@ For non-geospatial data or when CRS is not needed:
 {
   "zarr_format": 3,
   "node_type": "array",
+  "dimension_names": ["y", "x"],
   "attributes": {
     "zarr_conventions": [
       {
@@ -295,6 +297,7 @@ For a Digital Elevation Model using node registration (grid-registered):
 {
   "zarr_format": 3,
   "node_type": "array",
+  "dimension_names": ["y", "x"],
   "attributes": {
     "zarr_conventions": [
       {
@@ -326,6 +329,7 @@ For geospatial data, combine `spatial:` with `proj:` for complete coordinate inf
 {
   "zarr_format": 3,
   "node_type": "array",
+  "dimension_names": ["Y", "X"],
   "attributes": {
     "zarr_conventions": [
       {
@@ -410,7 +414,6 @@ The spatial: convention can extend multiscales layouts by adding spatial propert
     ]
   },
   "proj:code": "EPSG:32633",
-  "spatial:dimensions": ["Y", "X"],
   "spatial:bbox": [500000.0, 4988000.0, 512000.0, 5000000.0]
 }
 ```
@@ -418,7 +421,8 @@ The spatial: convention can extend multiscales layouts by adding spatial propert
 In this example:
 
 - The group-level `proj:code` defines the CRS for all resolution levels
-- The group-level `spatial:dimensions` and `spatial:bbox` apply to all resolution levels
+- The group-level `spatial:bbox` applies to all resolution levels
+- Each underlying asset array declares its own `dimension_names` and `spatial:dimensions` (forbidden at group level; see [Can I use spatial: at the group level?](#can-i-use-spatial-at-the-group-level))
 - Each layout item has its own `spatial:shape` and `spatial:transform` specific to that resolution
 - The multiscales convention defines the relative transformations between levels via the `transform` object
 - This enables efficient storage of multi-resolution geospatial data with proper georeferencing at each level
@@ -483,11 +487,13 @@ Yes! The `spatial:` convention is useful on its own for:
 
 ### Can I use spatial: at the group level?
 
-Yes, `spatial:` properties can be defined at both group and array levels. When defined at the group level:
+Most `spatial:` properties may be defined at the group level as shared defaults for direct child arrays that do not define their own values. `spatial:dimensions` is the exception: it is **required on arrays and forbidden on groups**, because a group can contain arrays with different dimensions and the property only has unambiguous meaning relative to a specific array's [`dimension_names`](https://github.com/zarr-developers/zarr-specs/blob/main/docs/v3/core/index.rst#dimension_names).
 
-- Properties apply to direct child arrays that don't define their own `spatial:` properties
-- This is useful when multiple arrays share the same spatial coordinate system
-- Arrays can define their own `spatial:` properties to override or supplement group-level definitions
+When defined at the group level, the remaining properties:
+
+- Apply to direct child arrays that don't define their own `spatial:` properties
+- Are useful when multiple arrays share the same spatial coordinate system
+- Can be overridden or supplemented by array-level definitions
 
 This is particularly useful with multiscales, where the CRS (`proj:`) is shared but spatial properties (`spatial:shape`, `spatial:transform`) vary per resolution level.
 
@@ -496,9 +502,8 @@ This is particularly useful with multiscales, where the CRS (`proj:`) is shared 
 When composing `spatial:` with a `proj:` convention:
 
 - Both conventions must be listed in `zarr_conventions`
-- `spatial:dimensions` must be provided to identify which array dimensions are spatial
+- `spatial:dimensions` must be provided on each array to identify which of the array's `dimension_names` are spatial
 - The coordinate values in `spatial:bbox` and `spatial:transform` should be in the coordinate system defined by `proj:`
-- For geospatial compatibility, follow standard axis ordering conventions (typically Y, X or Z, Y, X)
 
 ### How does the convention support different transformation types?
 
