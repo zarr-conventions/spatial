@@ -1,7 +1,7 @@
 # Spatial Convention
 
 - **UUID**: 689b58e2-cf7b-45e0-9fff-9cfc0883d6b4
-- **Name**: "spatial:"
+- **Name**: "spatial"
 - **Schema URL**: "<https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json>"
 - **Spec URL**: "<https://github.com/zarr-conventions/spatial/blob/v1/README.md>"
 - **Scope**: Array, Group
@@ -42,7 +42,7 @@ The convention must be registered in `zarr_conventions`:
       "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
       "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
       "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
-      "name": "spatial:",
+      "name": "spatial",
       "description": "Spatial coordinate information"
     }
   ]
@@ -274,7 +274,7 @@ For non-geospatial data or when CRS is not needed:
         "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
         "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
         "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
-        "name": "spatial:",
+        "name": "spatial",
         "description": "Spatial coordinate information"
       }
     ],
@@ -301,7 +301,7 @@ For a Digital Elevation Model using node registration (grid-registered):
         "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
         "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
         "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
-        "name": "spatial:",
+        "name": "spatial",
         "description": "Spatial coordinate information"
       }
     ],
@@ -339,7 +339,7 @@ For geospatial data, combine `spatial:` with `proj:` for complete coordinate inf
         "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
         "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
         "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
-        "name": "spatial:",
+        "name": "spatial",
         "description": "Spatial coordinate information"
       }
     ],
@@ -382,7 +382,7 @@ The spatial: convention can extend multiscales layouts by adding spatial propert
       "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
       "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
       "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
-      "name": "spatial:",
+      "name": "spatial",
       "description": "Spatial coordinate information"
     }
   ],
