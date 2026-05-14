@@ -54,8 +54,8 @@
         },
         "name": {
           "type": "string",
-          "const": "spatial:",
-          "description": "Human-readable name of the convention with colon to indicate key-prefixing"
+          "const": "spatial",
+          "description": "Human-readable name of the convention"
         },
         "description": {
           "type": "string",
