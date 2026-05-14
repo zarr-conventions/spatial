@@ -481,6 +481,17 @@ Yes! The `spatial:` convention is useful on its own for:
 - Workflows that don't need formal CRS definitions
 - Cases where CRS information is managed separately
 
+### Does `spatial:` replace explicit coordinate arrays?
+
+**Yes, for affine cases.** The `spatial:transform` provides *implicit* coordinates: applying the affine matrix to an array index yields the coordinate of that cell, so explicit per-axis `x`/`y` coordinate arrays (as commonly stored alongside NetCDF/xarray data) are not required and would be redundant.
+
+Storing explicit coordinate arrays is still allowed — for instance, when:
+
+- Coordinates are non-affine (irregular spacing, curvilinear grids, swath data) and cannot be expressed by `spatial:transform_type: "affine"`. A future `spatial:transform_type: "lookup"` (see [spatial:transform_type](#spatialtransform_type)) is intended to reference such arrays explicitly.
+- You want xarray/CF tooling to discover coordinates by name without computing them from the transform.
+
+In those cases the explicit coordinate arrays carry the values; `spatial:` still describes the spatial dimensions and any bounding box, and `proj:` (if present) defines the CRS those values live in.
+
 ### Can I use spatial: at the group level?
 
 Yes, `spatial:` properties can be defined at both group and array levels. When defined at the group level:
