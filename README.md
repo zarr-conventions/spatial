@@ -1,7 +1,7 @@
 # Spatial Convention
 
 - **UUID**: 689b58e2-cf7b-45e0-9fff-9cfc0883d6b4
-- **Name**: "spatial:"
+- **Name**: "spatial"
 - **Schema URL**: "<https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json>"
 - **Spec URL**: "<https://github.com/zarr-conventions/spatial/blob/v1/README.md>"
 - **Scope**: Array, Group
@@ -11,6 +11,10 @@
 ## Description
 
 This Zarr Convention defines metadata for describing the relationship between array indices and spatial coordinates. All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level following the [Zarr Conventions Specification](https://github.com/zarr-conventions/zarr-conventions-spec).
+
+### Scope
+
+The `spatial:` convention describes the **two horizontal (X/Y) spatial axes only**. Arrays may have additional dimensions (bands, time, depth/Z, etc.); the `spatial:` properties simply identify and describe the two X/Y axes of such arrays. Any non-X/Y axis is out of scope for this convention and is expected to be described by another convention (e.g., CF coordinate variables for Z/time, or a future n-dimensional coordinate convention).
 
 This convention is designed to be composable with other conventions:
 
@@ -42,7 +46,7 @@ The convention must be registered in `zarr_conventions`:
       "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
       "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
       "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
-      "name": "spatial:",
+      "name": "spatial",
       "description": "Spatial coordinate information"
     }
   ]
@@ -60,14 +64,14 @@ This convention can be used with these parts of the Zarr hierarchy:
 
 All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level.
 
-| Property                   | Type       | Description                                                         | Required | Reference                                        |
-| -------------------------- | ---------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
-| **spatial:dimensions**     | `string[]` | Names of spatial dimensions (e.g., ["y", "x"])                      | Arrays only (required on arrays, forbidden on groups) | [spatial:dimensions](#spatialdimensions)         |
-| **spatial:bbox**           | `number[]` | Bounding box in coordinate space                                    | No       | [spatial:bbox](#spatialbbox)                     |
-| **spatial:transform_type** | `string`   | Type of coordinate transformation (default: "affine")               | No       | [spatial:transform_type](#spatialtransform_type) |
-| **spatial:transform**      | `number[]` | Affine transformation coefficients                                  | No       | [spatial:transform](#spatialtransform)           |
-| **spatial:shape**          | `number[]` | Shape of spatial dimensions [height, width]                         | No       | [spatial:shape](#spatialshape)                   |
-| **spatial:registration**   | `string`   | Grid cell registration (i.e., raster space) type (default: "pixel") | No       | [spatial:registration](#spatialregistration)     |
+| Property                   | Type        | Description                                                         | Required | Reference                                        |
+| -------------------------- | ----------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
+| **spatial:dimensions**     | `string[2]` | Names of the two X/Y spatial dimensions (e.g., ["y", "x"])          | Arrays only (required on arrays, forbidden on groups)      | [spatial:dimensions](#spatialdimensions)         |
+| **spatial:bbox**           | `number[4]` | 2D bounding box [xmin, ymin, xmax, ymax]                            | No       | [spatial:bbox](#spatialbbox)                     |
+| **spatial:transform_type** | `string`    | Type of coordinate transformation (default: "affine")               | No       | [spatial:transform_type](#spatialtransform_type) |
+| **spatial:transform**      | `number[6]` | 2D affine transformation coefficients                               | No       | [spatial:transform](#spatialtransform)           |
+| **spatial:shape**          | `integer[2]`| Shape of the two spatial dimensions [height, width]                 | No       | [spatial:shape](#spatialshape)                   |
+| **spatial:registration**   | `string`    | Grid cell registration (i.e., raster space) type (default: "pixel") | No       | [spatial:registration](#spatialregistration)     |
 
 ### Field Details
 
@@ -77,10 +81,10 @@ Additional properties are allowed.
 
 Names of the array dimensions that are spatial.
 
-- **Type**: `string[]`
+- **Type**: `string[2]`
 - **Required**: On arrays only. Forbidden on groups (see [Can I use spatial: at the group level?](#can-i-use-spatial-at-the-group-level)).
 
-Identifies which of the array's dimensions correspond to spatial axes. This is particularly useful when arrays have non-spatial dimensions as well (e.g., time, bands, y, x).
+Identifies which of the array's dimensions correspond to spatial axes. This is particularly useful when arrays have non-spatial dimensions as well (e.g., time, bands).
 
 Each entry in `spatial:dimensions` MUST match one of the names declared in the array's [`dimension_names`](https://github.com/zarr-developers/zarr-specs/blob/main/docs/v3/core/index.rst#dimension_names) metadata field (a top-level field of the Zarr V3 array metadata, not an attribute). Arrays using this convention MUST therefore declare `dimension_names`.
 
@@ -92,15 +96,12 @@ For 2D spatial data, provide 2 entries, e.g. `["y", "x"]`.
 
 Bounding box in coordinate space
 
-- **Type**: `number[]`
+- **Type**: `number[4]`
 - **Required**: No
 
-Bounding box of the spatial extent in the coordinate space. The length of the array must be 2\*n where n is the number of spatial dimensions.
+Bounding box of the X/Y spatial extent in the coordinate space: `[xmin, ymin, xmax, ymax]` (exactly 4 elements).
 
-For 2D spatial data: `[xmin, ymin, xmax, ymax]` (4 elements)
-For 3D spatial data: `[xmin, ymin, zmin, xmax, ymax, zmax]` (6 elements)
-
-The coordinates represent the minimum and maximum values along each spatial axis. The interpretation of these coordinates depends on any associated coordinate reference system (e.g., from a `proj:` convention) or can represent abstract spatial units.
+The coordinates represent the minimum and maximum values along the X and Y axes. The interpretation of these coordinates depends on any associated coordinate reference system (e.g., from a `proj:` convention) or can represent abstract spatial units.
 
 #### spatial:transform_type
 
@@ -129,7 +130,7 @@ Affine transformation coefficients
 
 Mapping from array index space to coordinate space that preserves points, straight lines, and ratios, including scaling, rotating, or translating. Used when `spatial:transform_type` is `"affine"` or omitted (default behavior).
 
-For 2D spatial data: 6 elements `[a, b, c, d, e, f]`, since the last row is `0,0,1` it can be omitted such than only 6 elements are recording.
+Exactly 6 elements `[a, b, c, d, e, f]`; the implicit last row of the homogeneous matrix is `0, 0, 1` and is omitted.
 
 The 2D transformation maps array indices (col_index, row_index) to spatial coordinates (x, y) according to:
 
@@ -191,17 +192,14 @@ spatial_transform = list(affine_transform)[:6]  # Direct conversion
 
 Shape of spatial dimensions
 
-- **Type**: `integer[]`
+- **Type**: `integer[2]`
 - **Required**: No
 
-Specifies the dimensions of the spatial axes in array index units.
-
-For 2D spatial data: `[height, width]` corresponding to `[y, x]` (2 elements)
-For 3D spatial data: `[depth, height, width]` corresponding to `[z, y, x]` (3 elements)
+Specifies the size of the two X/Y spatial axes in array index units: `[height, width]` corresponding to `[y, x]` (exactly 2 elements).
 
 This property is particularly useful when:
 
-- The spatial shape differs from the full array shape (e.g., when the array includes non-spatial dimensions)
+- The spatial shape differs from the full array shape (e.g., when the array includes non-spatial dimensions such as time, bands, or Z)
 - Used with multiscales convention to specify shape at different resolution levels
 - Documenting the spatial extent explicitly
 
@@ -276,7 +274,7 @@ For non-geospatial data or when CRS is not needed:
         "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
         "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
         "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
-        "name": "spatial:",
+        "name": "spatial",
         "description": "Spatial coordinate information"
       }
     ],
@@ -304,7 +302,7 @@ For a Digital Elevation Model using node registration (grid-registered):
         "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
         "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
         "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
-        "name": "spatial:",
+        "name": "spatial",
         "description": "Spatial coordinate information"
       }
     ],
@@ -343,7 +341,7 @@ For geospatial data, combine `spatial:` with `proj:` for complete coordinate inf
         "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
         "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
         "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
-        "name": "spatial:",
+        "name": "spatial",
         "description": "Spatial coordinate information"
       }
     ],
@@ -386,7 +384,7 @@ The spatial: convention can extend multiscales layouts by adding spatial propert
       "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
       "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
       "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
-      "name": "spatial:",
+      "name": "spatial",
       "description": "Spatial coordinate information"
     }
   ],
@@ -485,6 +483,17 @@ Yes! The `spatial:` convention is useful on its own for:
 - Workflows that don't need formal CRS definitions
 - Cases where CRS information is managed separately
 
+### Does `spatial:` replace explicit coordinate arrays?
+
+**Yes, for affine cases.** The `spatial:transform` provides *implicit* coordinates: applying the affine matrix to an array index yields the coordinate of that cell, so explicit per-axis `x`/`y` coordinate arrays (as commonly stored alongside NetCDF/xarray data) are not required and would be redundant.
+
+Storing explicit coordinate arrays is still allowed — for instance, when:
+
+- Coordinates are non-affine (irregular spacing, curvilinear grids, swath data) and cannot be expressed by `spatial:transform_type: "affine"`. A future `spatial:transform_type: "lookup"` (see [spatial:transform_type](#spatialtransform_type)) is intended to reference such arrays explicitly.
+- You want xarray/CF tooling to discover coordinates by name without computing them from the transform.
+
+In those cases the explicit coordinate arrays carry the values; `spatial:` still describes the spatial dimensions and any bounding box, and `proj:` (if present) defines the CRS those values live in.
+
 ### Can I use spatial: at the group level?
 
 Most `spatial:` properties may be defined at the group level as shared defaults for direct child arrays that do not define their own values. `spatial:dimensions` is the exception: it is **required on arrays and forbidden on groups**, because a group can contain arrays with different dimensions and the property only has unambiguous meaning relative to a specific array's [`dimension_names`](https://github.com/zarr-developers/zarr-specs/blob/main/docs/v3/core/index.rst#dimension_names).
@@ -516,6 +525,18 @@ The `spatial:transform_type` property enables extensibility for different coordi
 - **Forward compatibility**: The convention does not use a fixed enum, allowing new transform types to be added without invalidating old schemas
 
 Implementations should handle unknown transform types gracefully (warn or skip) rather than failing, ensuring forward compatibility as new transform types are standardized.
+
+### What about a Z (depth/altitude) dimension or 3D data?
+
+In v1, `spatial:` describes only the two horizontal X/Y axes. Arrays may still have additional dimensions (Z, time, bands, etc.); the `spatial:` properties simply describe the X/Y axes of such arrays and say nothing about the other axes.
+
+This is a deliberate choice for v1 (see [issue #10](https://github.com/zarr-conventions/spatial/issues/10)):
+
+- No mainstream geospatial library supports 3D affine transforms — GDAL, rasterio, the Affine library, and GeoTIFF are all strictly 2D. CF/NetCDF treats vertical axes as independent 1D coordinate variables rather than as part of an affine transform.
+- In practice the Z axis is almost always independent of X/Y (just a scale + offset, or irregular coordinate values), so a full 3D affine with XZ/YZ rotation would be overkill.
+- Keeping v1 small and stable lets the convention be adopted broadly for the well-understood 2D case before adding spec surface area driven by less common use cases.
+
+Non-X/Y axes (Z, time, bands, …) can be described by composing with another convention, e.g., a CF-style coordinate variable convention. A future revision of `spatial:` (or a sibling convention) may add explicit ND coordinate semantics once the ecosystem need and design are clear.
 
 ### How does spatial:registration relate to GeoTIFF PixelIsArea/PixelIsPoint?
 
