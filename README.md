@@ -69,7 +69,7 @@ All properties use the `spatial:` namespace prefix and are placed at the root `a
 | **spatial:dimensions**     | `string[2]` | Names of the two X/Y spatial dimensions (e.g., ["y", "x"])          | Yes      | [spatial:dimensions](#spatialdimensions)         |
 | **spatial:bbox**           | `number[4]` | 2D bounding box [xmin, ymin, xmax, ymax]                            | No       | [spatial:bbox](#spatialbbox)                     |
 | **spatial:transform_type** | `string`    | Type of coordinate transformation (default: "affine")               | No       | [spatial:transform_type](#spatialtransform_type) |
-| **spatial:transform**      | `number[6]` | 2D affine transformation coefficients                               | No       | [spatial:transform](#spatialtransform)           |
+| **spatial:transform**      | `number[6]` | 2D affine transformation coefficients                               | Conditional | [spatial:transform](#spatialtransform)           |
 | **spatial:shape**          | `integer[2]`| Shape of the two spatial dimensions [height, width]                 | No       | [spatial:shape](#spatialshape)                   |
 | **spatial:registration**   | `string`    | Grid cell registration (i.e., raster space) type (default: "pixel") | No       | [spatial:registration](#spatialregistration)     |
 
@@ -124,7 +124,7 @@ When `spatial:transform_type` is omitted, implementations MUST assume `"affine"`
 Affine transformation coefficients
 
 - **Type**: `number[6]`
-- **Required**: No (but required when `spatial:transform_type` is `"affine"` or omitted)
+- **Required**: Conditional. Required when `spatial:transform_type` is `"affine"` or omitted.
 
 Mapping from array index space to coordinate space that preserves points, straight lines, and ratios, including scaling, rotating, or translating. Used when `spatial:transform_type` is `"affine"` or omitted (default behavior).
 
@@ -145,12 +145,12 @@ Which expands to:
 
 Where:
 
-- `a`: pixel width (w-e pixel resolution)
-- `b`: row rotation (typically 0)
-- `c`: x-coordinate of the upper-left corner of the upper-left pixel
-- `d`: column rotation (typically 0)
-- `e`: pixel height (n-s pixel resolution, negative value for north-up images)
-- `f`: y-coordinate of the upper-left corner of the upper-left pixel
+- `a`: Resolution along the X axis
+- `b`: X-axis rotation from the East-West parallel (usually 0)
+- `c`: Western-most coordinate of the X axis
+- `d`: Y-axis rotation from the North-South meridian (usually 0)
+- `e`: Resolution along the Y axis (negative value for north-up images)
+- `f`: Northern-most coordinate of the Y axis
 
 **Coordinate convention:**
 
