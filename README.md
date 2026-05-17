@@ -149,18 +149,19 @@ Where:
 
 - `a`: pixel width (w-e pixel resolution)
 - `b`: row rotation (typically 0)
-- `c`: x-coordinate of the upper-left corner of the upper-left pixel
+- `c`: x-coordinate of pixel (0, 0)
 - `d`: column rotation (typically 0)
 - `e`: pixel height (n-s pixel resolution, negative value for north-up images)
-- `f`: y-coordinate of the upper-left corner of the upper-left pixel
+- `f`: y-coordinate of pixel (0, 0)
 
 **Coordinate convention:**
 
-The transform operates on array indices where `(0, 0)` is at the **top-left corner** of the top-left pixel, and `(width, height)` is at the bottom-right corner of the bottom-right pixel. The center of the top-left pixel is at `(0.5, 0.5)`.
+The meaning of pixel (0, 0) depends on `spatial:registration`:
 
-This follows the GDAL geotransform and Python's Affine library convention.
+- **`"pixel"` (default):** Pixel (0, 0) refers to the **top-left corner** of the top-left pixel. The pixel value fills the area from (0, 0) to (1, 1). An N×M image covers the bounds (0, 0) to (N, M). Coefficients `c` and `f` give the corner coordinates.
+- **`"node"`:** Pixel (0, 0) refers to the **point location** of the top-left pixel. The pixel value is a point measurement at that location. An N×M image covers the bounds (0, 0) to (N-1, M-1). Coefficients `c` and `f` give the point coordinates. If displayed with pixel cells, the top-left corner of the display would be at (-0.5, -0.5) in index space.
 
-Note: Rasterio's `xy()` and `rowcol()` methods automatically add/subtract 0.5 to convert between pixel coordinates and corner coordinates. For example, `transformer.xy(0, 0)` is equivalent to applying this transform to `(0.5, 0.5)`, giving the coordinate at the center of the first pixel.
+This matches the [GeoTIFF raster space model](http://docs.opengeospatial.org/is/19-008r4/19-008r4.html#_raster_space), where the ModelTiePoint at (0, 0) gives the corner coordinate for PixelIsArea and the point coordinate for PixelIsPoint.
 
 **Coefficient ordering:**
 
@@ -212,34 +213,27 @@ Grid cell registration type
 - **Default**: `"pixel"`
 - **Valid values**: `"node"` or `"pixel"`
 
-Specifies whether the grid uses node registration (grid-registered) or pixel registration (cell-registered). This property is particularly important for grids where the interpretation of coordinate ranges differs between registration types.
+Specifies whether pixel values represent area measurements or point measurements. This affects how `spatial:transform` and `spatial:bbox` coordinates are interpreted (see [spatial:transform coordinate convention](#spatialtransform)).
 
-**Node Registration (grid/node):**
+**Pixel Registration (`"pixel"`, default):**
 
-Node-registered grids have cells centered on the grid-lines. The coordinate ranges (`spatial:bbox` and `spatial:transform`) refer to the centers of the cells on the outside border of the grid, and the footprints of the cells extend 1/2 cell width outside these ranges.
+Pixel values represent measurements over an area. Coordinates in `spatial:transform` and `spatial:bbox` refer to cell boundaries (edges).
 
-- Cells are centered on coordinate points
-- Commonly used for discrete point data representation
-- A global grid will have cells centered directly on the North and South Poles
-- Has one more row and one more column than a pixel-registered grid with identical range
+- An N×M image covers bounds (0, 0) to (N, M) in index space
+- Commonly used for imagery and raster data
+- Equivalent to GeoTIFF PixelIsArea
 
-**Pixel Registration (cell/pixel):**
+**Node Registration (`"node"`):**
 
-Pixel-registered grids have cells lying between the grid-lines. The coordinate ranges refer to the outside edges of the boundaries of the grid.
+Pixel values represent point measurements at specific locations. Coordinates in `spatial:transform` and `spatial:bbox` refer to cell centers (nodes).
 
-- Cell boundaries align with coordinate points
-- Commonly used in images to prevent edge pixels from being cut in half
-- A global grid will touch the edges of the poles without covering their centers
-- Each cell in one registration overlaps quadrants of four cells in the corresponding node-registration
+- An N×M image covers bounds (0, 0) to (N-1, M-1) in index space
+- Cell footprints extend 1/2 cell width beyond the stated coordinate range
+- A node-registered grid covering the same extent as a pixel-registered grid has one more row and column
+- Commonly used for DEMs, weather station grids, and older NetCDF files
+- Equivalent to GeoTIFF PixelIsPoint
 
-**Important considerations:**
-
-- Converting between registration types results in relief flattening, as each cell in one registration overlies corners of four cells in the other
-- The conversion process averages values, reducing local highs and raising local deeps
-- Most grid applications recognize both types, but misidentifying the registration can shift cell locations and data
-- This property helps tools correctly interpret the relationship between array indices and spatial coordinates
-
-When `spatial:registration` is omitted, implementations MUST assume `"pixel"` registration for backwards compatibility.
+When `spatial:registration` is omitted, implementations MUST assume `"pixel"` registration.
 
 **Relationship to other formats:**
 
@@ -538,11 +532,14 @@ Non-X/Y axes (Z, time, bands, …) can be described by composing with another co
 
 ### How does spatial:registration relate to GeoTIFF PixelIsArea/PixelIsPoint?
 
-The `spatial:registration` property directly maps to GeoTIFF's raster space concepts:
+The `spatial:registration` property directly maps to GeoTIFF's [raster space model](http://docs.opengeospatial.org/is/19-008r4/19-008r4.html#_raster_space):
 
-- **`spatial:registration: "pixel"`** (default) = **GeoTIFF PixelIsArea**: Pixels represent areas/cells with boundaries at coordinate points. An N×M image covers bounds (0,0) to (N,M).
-
-- **`spatial:registration: "node"`** = **GeoTIFF PixelIsPoint**: Pixel values are point measurements at coordinate locations. An N×M image covers bounds (0,0) to (N-1,M-1).
+| | `"pixel"` (default) | `"node"` |
+|---|---|---|
+| **GeoTIFF equivalent** | PixelIsArea | PixelIsPoint |
+| **Pixel values represent** | Area/cell measurements | Point measurements |
+| **`spatial:transform` origin (`c`, `f`)** | Corner of top-left pixel | Location of top-left pixel |
+| **N×M image bounds** | (0, 0) to (N, M) | (0, 0) to (N-1, M-1) |
 
 When converting GeoTIFF data to Zarr, use `spatial:registration: "node"` for PixelIsPoint GeoTIFFs and `spatial:registration: "pixel"` (or omit it) for PixelIsArea GeoTIFFs.
 
