@@ -66,7 +66,7 @@ All properties use the `spatial:` namespace prefix and are placed at the root `a
 
 | Property                   | Type        | Description                                                         | Required | Reference                                        |
 | -------------------------- | ----------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
-| **spatial:dimensions**     | `string[2]` | Names of the two X/Y spatial dimensions (e.g., ["y", "x"])          | Yes      | [spatial:dimensions](#spatialdimensions)         |
+| **spatial:dimensions**     | `string[2]` | Names of the two X/Y spatial dimensions (e.g., ["y", "x"])          | On arrays | [spatial:dimensions](#spatialdimensions)         |
 | **spatial:bbox**           | `number[4]` | 2D bounding box [xmin, ymin, xmax, ymax]                            | No       | [spatial:bbox](#spatialbbox)                     |
 | **spatial:transform_type** | `string`    | Type of coordinate transformation (default: "affine")               | No       | [spatial:transform_type](#spatialtransform_type) |
 | **spatial:transform**      | `number[6]` | 2D affine transformation coefficients                               | No       | [spatial:transform](#spatialtransform)           |
@@ -82,7 +82,7 @@ Additional properties are allowed.
 Names of the array dimensions that have spatial coordinates.
 
 - **Type**: `string[2]`
-- **Required**: Yes
+- **Required**: Yes on arrays; optional on groups (where it acts as a default for child arrays).
 
 Identifies which of the array's dimensions correspond to spatial axes. This is particularly useful when arrays have non-spatial dimensions as well (e.g., time, bands).
 
