@@ -79,7 +79,7 @@ Additional properties are allowed.
 
 #### spatial:dimensions
 
-Names of the array dimensions that are spatial.
+Names of the array dimensions that have spatial coordinates.
 
 - **Type**: `string[2]`
 - **Required**: On arrays only. Forbidden on groups (see [Can I use spatial: at the group level?](#can-i-use-spatial-at-the-group-level)).
