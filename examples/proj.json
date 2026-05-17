@@ -1,6 +1,7 @@
 {
   "zarr_format": 3,
   "node_type": "array",
+  "dimension_names": ["Y", "X"],
   "attributes": {
     "zarr_conventions": [
       {

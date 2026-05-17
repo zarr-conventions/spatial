@@ -66,7 +66,7 @@ All properties use the `spatial:` namespace prefix and are placed at the root `a
 
 | Property                   | Type        | Description                                                         | Required | Reference                                        |
 | -------------------------- | ----------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
-| **spatial:dimensions**     | `string[2]` | Names of the two X/Y spatial dimensions (e.g., ["y", "x"])          | Yes      | [spatial:dimensions](#spatialdimensions)         |
+| **spatial:dimensions**     | `string[2]` | Names of the two X/Y spatial dimensions (e.g., ["y", "x"])          | On arrays | [spatial:dimensions](#spatialdimensions)         |
 | **spatial:bbox**           | `number[4]` | 2D bounding box [xmin, ymin, xmax, ymax]                            | No       | [spatial:bbox](#spatialbbox)                     |
 | **spatial:transform_type** | `string`    | Type of coordinate transformation (default: "affine")               | No       | [spatial:transform_type](#spatialtransform_type) |
 | **spatial:transform**      | `number[6]` | 2D affine transformation coefficients                               | No       | [spatial:transform](#spatialtransform)           |
@@ -79,16 +79,18 @@ Additional properties are allowed.
 
 #### spatial:dimensions
 
-Names of the two X/Y spatial dimensions
+Names of the array dimensions that have spatial coordinates.
 
 - **Type**: `string[2]`
-- **Required**: Yes
+- **Required**: Yes on arrays; optional on groups (where it acts as a default for child arrays).
 
-Identifies which two dimensions in the Zarr array correspond to the X and Y spatial axes. This is particularly useful when arrays have additional dimensions (e.g., time, bands, depth/Z).
+Identifies which of the array's dimensions correspond to spatial axes. This is particularly useful when arrays have non-spatial dimensions as well (e.g., time, bands).
 
-Provide exactly 2 elements in row-major order: `["y", "x"]`.
+Each entry in `spatial:dimensions` MUST match one of the names declared in the array's [`dimension_names`](https://github.com/zarr-developers/zarr-specs/blob/main/docs/v3/core/index.rst#dimension_names) metadata field (a top-level field of the Zarr V3 array metadata, not an attribute). Arrays using this convention MUST therefore declare `dimension_names`.
 
-The dimension names must match the dimension names defined in the array's shape. Additional (non-X/Y) array dimensions are not described by this convention in v1.
+Matching is **by name, not by position**: the order of entries in `spatial:dimensions` is not significant for identifying which dimensions are spatial. Conventions that consume this list (e.g., for axis ordering in `spatial:transform` or `spatial:shape`) define their own ordering rules.
+
+For 2D spatial data, provide 2 entries, e.g. `["y", "x"]`.
 
 #### spatial:bbox
 
@@ -265,6 +267,7 @@ For non-geospatial data or when CRS is not needed:
 {
   "zarr_format": 3,
   "node_type": "array",
+  "dimension_names": ["y", "x"],
   "attributes": {
     "zarr_conventions": [
       {
@@ -292,6 +295,7 @@ For a Digital Elevation Model using node registration (grid-registered):
 {
   "zarr_format": 3,
   "node_type": "array",
+  "dimension_names": ["y", "x"],
   "attributes": {
     "zarr_conventions": [
       {
@@ -323,6 +327,7 @@ For geospatial data, combine `spatial:` with `proj:` for complete coordinate inf
 {
   "zarr_format": 3,
   "node_type": "array",
+  "dimension_names": ["Y", "X"],
   "attributes": {
     "zarr_conventions": [
       {
@@ -504,9 +509,8 @@ This is particularly useful with multiscales, where the CRS (`proj:`) is shared 
 When composing `spatial:` with a `proj:` convention:
 
 - Both conventions must be listed in `zarr_conventions`
-- `spatial:dimensions` must be provided to identify which array dimensions are the X/Y spatial axes
+- `spatial:dimensions` must be provided on each array to identify which of the array's `dimension_names` are spatial
 - The coordinate values in `spatial:bbox` and `spatial:transform` should be in the coordinate system defined by `proj:`
-- For geospatial compatibility, follow standard axis ordering conventions (typically `["y", "x"]` in row-major order)
 
 ### How does the convention support different transformation types?
 

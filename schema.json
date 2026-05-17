@@ -32,6 +32,22 @@
   },
   "required": ["zarr_format", "node_type", "attributes"],
   "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "node_type": { "const": "array" } },
+        "required": ["node_type"]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "required": ["spatial:dimensions"]
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "conventionMetadata": {
       "type": "object",
@@ -163,7 +179,6 @@
           "additionalProperties": true
         }
       },
-      "required": ["spatial:dimensions"],
       "additionalProperties": true
     }
   }
