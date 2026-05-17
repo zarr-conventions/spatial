@@ -32,36 +32,6 @@
   },
   "required": ["zarr_format", "node_type", "attributes"],
   "additionalProperties": true,
-  "allOf": [
-    {
-      "if": {
-        "properties": { "node_type": { "const": "array" } },
-        "required": ["node_type"]
-      },
-      "then": {
-        "properties": {
-          "attributes": {
-            "type": "object",
-            "required": ["spatial:dimensions"]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": { "node_type": { "const": "group" } },
-        "required": ["node_type"]
-      },
-      "then": {
-        "properties": {
-          "attributes": {
-            "type": "object",
-            "not": { "required": ["spatial:dimensions"] }
-          }
-        }
-      }
-    }
-  ],
   "$defs": {
     "conventionMetadata": {
       "type": "object",
@@ -193,6 +163,7 @@
           "additionalProperties": true
         }
       },
+      "required": ["spatial:dimensions"],
       "additionalProperties": true
     }
   }

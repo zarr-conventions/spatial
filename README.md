@@ -66,7 +66,7 @@ All properties use the `spatial:` namespace prefix and are placed at the root `a
 
 | Property                   | Type        | Description                                                         | Required | Reference                                        |
 | -------------------------- | ----------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
-| **spatial:dimensions**     | `string[2]` | Names of the two X/Y spatial dimensions (e.g., ["y", "x"])          | Arrays only (required on arrays, forbidden on groups)      | [spatial:dimensions](#spatialdimensions)         |
+| **spatial:dimensions**     | `string[2]` | Names of the two X/Y spatial dimensions (e.g., ["y", "x"])          | Yes      | [spatial:dimensions](#spatialdimensions)         |
 | **spatial:bbox**           | `number[4]` | 2D bounding box [xmin, ymin, xmax, ymax]                            | No       | [spatial:bbox](#spatialbbox)                     |
 | **spatial:transform_type** | `string`    | Type of coordinate transformation (default: "affine")               | No       | [spatial:transform_type](#spatialtransform_type) |
 | **spatial:transform**      | `number[6]` | 2D affine transformation coefficients                               | No       | [spatial:transform](#spatialtransform)           |
@@ -82,7 +82,7 @@ Additional properties are allowed.
 Names of the array dimensions that have spatial coordinates.
 
 - **Type**: `string[2]`
-- **Required**: On arrays only. Forbidden on groups (see [Can I use spatial: at the group level?](#can-i-use-spatial-at-the-group-level)).
+- **Required**: Yes
 
 Identifies which of the array's dimensions correspond to spatial axes. This is particularly useful when arrays have non-spatial dimensions as well (e.g., time, bands).
 
@@ -412,6 +412,7 @@ The spatial: convention can extend multiscales layouts by adding spatial propert
     ]
   },
   "proj:code": "EPSG:32633",
+  "spatial:dimensions": ["Y", "X"],
   "spatial:bbox": [500000.0, 4988000.0, 512000.0, 5000000.0]
 }
 ```
@@ -419,8 +420,7 @@ The spatial: convention can extend multiscales layouts by adding spatial propert
 In this example:
 
 - The group-level `proj:code` defines the CRS for all resolution levels
-- The group-level `spatial:bbox` applies to all resolution levels
-- Each underlying asset array declares its own `dimension_names` and `spatial:dimensions` (forbidden at group level; see [Can I use spatial: at the group level?](#can-i-use-spatial-at-the-group-level))
+- The group-level `spatial:dimensions` and `spatial:bbox` apply to all resolution levels
 - Each layout item has its own `spatial:shape` and `spatial:transform` specific to that resolution
 - The multiscales convention defines the relative transformations between levels via the `transform` object
 - This enables efficient storage of multi-resolution geospatial data with proper georeferencing at each level
@@ -496,13 +496,11 @@ In those cases the explicit coordinate arrays carry the values; `spatial:` still
 
 ### Can I use spatial: at the group level?
 
-Most `spatial:` properties may be defined at the group level as shared defaults for direct child arrays that do not define their own values. `spatial:dimensions` is the exception: it is **required on arrays and forbidden on groups**, because a group can contain arrays with different dimensions and the property only has unambiguous meaning relative to a specific array's [`dimension_names`](https://github.com/zarr-developers/zarr-specs/blob/main/docs/v3/core/index.rst#dimension_names).
+Yes, `spatial:` properties can be defined at both group and array levels. When defined at the group level:
 
-When defined at the group level, the remaining properties:
-
-- Apply to direct child arrays that don't define their own `spatial:` properties
-- Are useful when multiple arrays share the same spatial coordinate system
-- Can be overridden or supplemented by array-level definitions
+- Properties apply to direct child arrays that don't define their own `spatial:` properties
+- This is useful when multiple arrays share the same spatial coordinate system
+- Arrays can define their own `spatial:` properties to override or supplement group-level definitions
 
 This is particularly useful with multiscales, where the CRS (`proj:`) is shared but spatial properties (`spatial:shape`, `spatial:transform`) vary per resolution level.
 

@@ -59,6 +59,7 @@
       ]
     },
     "proj:code": "EPSG:32633",
+    "spatial:dimensions": ["Y", "X"],
     "spatial:bbox": [500000.0, 4988000.0, 512000.0, 5000000.0]
   }
 }
