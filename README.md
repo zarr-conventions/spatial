@@ -104,7 +104,7 @@ Bounding box in coordinate space
 
 Bounding box of the X/Y spatial extent in the coordinate space: `[xmin, ymin, xmax, ymax]` (exactly 4 elements).
 
-The coordinates represent the minimum and maximum values along the X and Y axes. The interpretation of these coordinates depends on any associated coordinate reference system (e.g., from a `proj:` convention) or can represent abstract spatial units.
+The coordinates represent the minimum and maximum values along the X and Y axes. The interpretation of these coordinates depends on any associated coordinate reference system (e.g., from the [`proj`] convention) or can represent abstract spatial units.
 
 ### spatial:transform_type
 
