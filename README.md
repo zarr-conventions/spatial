@@ -18,16 +18,16 @@ The `spatial:` convention describes the **two horizontal (X/Y) spatial axes only
 
 This convention is designed to be composable with other conventions:
 
-- Combine with the [`geo-proj`] convention to add coordinate reference system (CRS) information for geospatial data
+- Combine with the [`proj`] convention to add coordinate reference system (CRS) information for geospatial data
 - Combine with the [`multiscales`] convention to define spatial properties at different resolution levels
 - Use standalone for non-geospatial data that has spatial relationships (e.g., microscopy, medical imaging)
 
-[`geo-proj`]: https://github.com/zarr-conventions/geo-proj
+[`proj`]: https://github.com/zarr-conventions/proj
 [`multiscales`]: https://github.com/zarr-conventions/multiscales
 
 Examples:
 
-- [Composition with `geo-proj`](examples/proj.json)
+- [Composition with `proj`](examples/proj.json)
 - [Composition with `multiscales`](examples/multiscales.json)
 
 ## Motivation
@@ -358,8 +358,8 @@ For geospatial data, combine `spatial:` with `proj:` for complete coordinate inf
   "attributes": {
     "zarr_conventions": [
       {
-        "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
-        "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+        "schema_url": "https://raw.githubusercontent.com/zarr-experimental/proj/refs/tags/v1/schema.json",
+        "spec_url": "https://github.com/zarr-experimental/proj/blob/v1/README.md",
         "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
         "name": "proj:",
         "description": "Coordinate reference system information for geospatial data"
@@ -401,8 +401,8 @@ The spatial: convention can extend multiscales layouts by adding spatial propert
       "description": "Multiscale layout of zarr datasets"
     },
     {
-      "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
-      "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+      "schema_url": "https://raw.githubusercontent.com/zarr-experimental/proj/refs/tags/v1/schema.json",
+      "spec_url": "https://github.com/zarr-experimental/proj/blob/v1/README.md",
       "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
       "name": "proj:",
       "description": "Coordinate reference system information for geospatial data"
@@ -455,13 +455,13 @@ In this example:
 
 ## FAQ
 
-### Why are `spatial` and [`geo-proj`] separate conventions?
+### Why are `spatial` and [`proj`] separate conventions?
 
 As explained in the [rasterio documentation](https://rasterio.readthedocs.io/): "There are two parts to the georeferencing of raster datasets: the definition of the local, regional, or global system in which a raster's pixels are located; and the parameters by which pixel coordinates are transformed into coordinates in that system."
 
 This fundamental distinction motivated the design decision ([zarr-conventions issue #9](https://github.com/zarr-conventions/zarr-conventions/issues/9)) to separate these concerns into two conventions:
 
-1. **[`geo-proj`]:** - Defines the coordinate reference system (CRS): the "local, regional, or global system" using EPSG codes, WKT2, or PROJJSON
+1. **[`proj`]:** - Defines the coordinate reference system (CRS): the "local, regional, or global system" using EPSG codes, WKT2, or PROJJSON
 2. **`spatial`:** - Defines the coordinate transformation: the "parameters by which pixel coordinates are transformed" including transform matrices, bounding boxes, and dimension mappings
 
 This separation provides several benefits:
@@ -481,7 +481,7 @@ The STAC Projection Extension combines CRS and spatial coordinate information in
 
 Both approaches are valid. The separated approach prioritizes modularity and broader applicability, while STAC prioritizes simplicity for the geospatial-only use case.
 
-### Can I use `spatial` without [`geo-proj`]?
+### Can I use `spatial` without [`proj`]?
 
 Yes! The `spatial:` convention is useful on its own for:
 
