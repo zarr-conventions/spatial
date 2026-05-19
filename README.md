@@ -461,8 +461,8 @@ As explained in the [rasterio documentation](https://rasterio.readthedocs.io/): 
 
 This fundamental distinction motivated the design decision ([zarr-conventions issue #9](https://github.com/zarr-conventions/zarr-conventions/issues/9)) to separate these concerns into two conventions:
 
-1. **[`proj`]:** - Defines the coordinate reference system (CRS): the "local, regional, or global system" using EPSG codes, WKT2, or PROJJSON
-2. **`spatial`:** - Defines the coordinate transformation: the "parameters by which pixel coordinates are transformed" including transform matrices, bounding boxes, and dimension mappings
+1. **[`proj`]:** defines the coordinate reference system (CRS): the "local, regional, or global system" using EPSG codes, WKT2, or PROJJSON
+2. **`spatial`:** Defines the coordinate transformation: the "parameters by which pixel coordinates are transformed" including transform matrices, bounding boxes, and dimension mappings
 
 This separation provides several benefits:
 
