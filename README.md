@@ -331,8 +331,8 @@ For geospatial data, combine `spatial:` with `proj:` for complete coordinate inf
   "attributes": {
     "zarr_conventions": [
       {
-        "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
-        "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/proj/refs/tags/v1/schema.json",
+        "spec_url": "https://github.com/zarr-conventions/proj/blob/v1/README.md",
         "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
         "name": "proj:",
         "description": "Coordinate reference system information for geospatial data"
@@ -374,8 +374,8 @@ The spatial: convention can extend multiscales layouts by adding spatial propert
       "description": "Multiscale layout of zarr datasets"
     },
     {
-      "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
-      "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/proj/refs/tags/v1/schema.json",
+      "spec_url": "https://github.com/zarr-conventions/proj/blob/v1/README.md",
       "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
       "name": "proj:",
       "description": "Coordinate reference system information for geospatial data"
