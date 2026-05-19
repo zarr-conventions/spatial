@@ -276,7 +276,7 @@ This property corresponds to similar concepts in other geospatial formats:
 - **GMT**: `"pixel"` = pixel registration, `"node"` = gridline registration
 - **NetCDF-CF**: Related to the interpretation of coordinate bounds
 
-#### References:
+#### References
 
 For more detailed information on grid cell registration concepts:
 
