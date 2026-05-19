@@ -61,7 +61,7 @@ This convention can be used with these parts of the Zarr hierarchy:
 
 ## Properties
 
-All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level (except for **`spatial:transform`**, which must be placed inside the `layout` array when composed with [`multiscales`]).
+All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level. When composed with [`multiscales`], `spatial:transform` and `spatial:shape` may additionally be placed inside each `layout` item to specify values per resolution level (see [Usage with `multiscales` convention](#usage-with-multiscales-convention)).
 
 | Property                   | Type       | Description                                                         | Required | Reference                                        |
 | -------------------------- | ---------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
