@@ -268,7 +268,7 @@ Pixel-registered grids have cells lying between the grid-lines. The coordinate r
 
 When `spatial:registration` is omitted, implementations MUST assume `"pixel"` registration for backwards compatibility.
 
-#### Relationship to other formats:
+#### Relationship to other formats
 
 This property corresponds to similar concepts in other geospatial formats:
 
