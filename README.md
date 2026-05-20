@@ -205,39 +205,30 @@ This property is particularly useful when:
 
 #### spatial:registration
 
-Grid cell registration type
+Registration type of the Zarr array to spatial coordinates
 
 - **Type**: `string`
 - **Required**: No
 - **Default**: `"pixel"`
 - **Valid values**: `"node"` or `"pixel"`
 
-Specifies whether the grid uses node registration (grid-registered) or pixel registration (cell-registered). This property is particularly important for grids where the interpretation of coordinate ranges differs between registration types.
+The elements in a Zarr array represent point locations or a finite area along the spatial dimensions, commonly referred to as a "pixel". This field indicates the nature of the elements in the Zarr array, which has an impact on how coordinate ranges are calculated.
 
-**Node Registration (grid/node):**
+**Node Registration:**
 
-Node-registered grids have cells centered on the grid-lines. The coordinate ranges (`spatial:bbox` and `spatial:transform`) refer to the centers of the cells on the outside border of the grid, and the footprints of the cells extend 1/2 cell width outside these ranges.
+Node-registered Zarr arrays represent point data. Point data is used for regularly-spaced samples across the spatial domain. The space between the points is formally undefined - applications may interpolate between points. Point data may also be referred to as postings, soundings, profiles, etc. Common applications of point data are digital elevation models, bathymetry, atmospheric profiles, etc.
 
-- Cells are centered on coordinate points
-- Commonly used for discrete point data representation
-- A global grid will have cells centered directly on the North and South Poles
-- Has one more row and one more column than a pixel-registered grid with identical range
+The coordinate ranges (`spatial:bbox` and `spatial:transform`) refer precisely to the point locations.
 
-**Pixel Registration (cell/pixel):**
+**Pixel Registration:**
 
-Pixel-registered grids have cells lying between the grid-lines. The coordinate ranges refer to the outside edges of the boundaries of the grid.
+The elements of pixel-registered Zarr arrays are called cells which fill the area across the spatial domain. Typical applications are satellite imagery, land use mapping, etc. The `x` and `y` coordinates of every cell refer to its **top-left corner** (as in `spatial:transform`).
 
-- Cell boundaries align with coordinate points
-- Commonly used in images to prevent edge pixels from being cut in half
-- A global grid will touch the edges of the poles without covering their centers
-- Each cell in one registration overlaps quadrants of four cells in the corresponding node-registration
+The coordinate ranges refer to the outside edges of the spatial domain.
 
-**Important considerations:**
+**Important consideration:**
 
-- Converting between registration types results in relief flattening, as each cell in one registration overlies corners of four cells in the other
-- The conversion process averages values, reducing local highs and raising local deeps
-- Most grid applications recognize both types, but misidentifying the registration can shift cell locations and data
-- This property helps tools correctly interpret the relationship between array indices and spatial coordinates
+Converting between registration types may be done at the application level but there is no universally-accepted method of doing so. Coordinates may shift by half a resolution in both directions.
 
 When `spatial:registration` is omitted, implementations MUST assume `"pixel"` registration for backwards compatibility.
 
@@ -247,7 +238,6 @@ This property corresponds to similar concepts in other geospatial formats:
 
 - **GeoTIFF**: `"pixel"` = PixelIsArea (default), `"node"` = PixelIsPoint
 - **GMT**: `"pixel"` = pixel registration, `"node"` = gridline registration
-- **NetCDF-CF**: Related to the interpretation of coordinate bounds
 
 **References:**
 
