@@ -91,7 +91,7 @@ Identifies which of the array's dimensions correspond to spatial axes. This is p
 
 Each entry in `spatial:dimensions` MUST match one of the names declared in the array's [`dimension_names`](https://github.com/zarr-developers/zarr-specs/blob/main/docs/v3/core/index.rst#dimension_names) metadata field (a top-level field of the Zarr V3 array metadata, not an attribute). Arrays using this convention MUST therefore declare `dimension_names`.
 
-The list in `spatial:dimensions` itself is **ordered by axis role**: the first entry names the dimension carrying the Y axis; the second entry names the dimension carrying the X axis. This ordering is what allows `spatial:transform` (and other consumers using `(x, y)` semantics) to resolve which array dimension is X and which is Y when the dimension names are not self-describing (e.g., `["dim_0", "dim_1"]`, `["northing", "easting"]`).
+The list in `spatial:dimensions` itself is **ordered by axis role**: the first entry names the dimension carrying the logical Y axis; the second entry names the dimension carrying the logical X axis. This ordering is what allows `spatial:transform` (and other consumers using `(x, y)` semantics) to resolve which array dimension is X and which is Y automatically without fragile parsing of the strings.
 
 For 2D spatial data, provide 2 entries, e.g. `["y", "x"]` or `["lat", "lon"]`. The corresponding array may store these dimensions in any order; for example, an array with `dimension_names = ["time", "lon", "lat"]` and `spatial:dimensions = ["lat", "lon"]` declares that `"lat"` is the Y axis (at array position 2) and `"lon"` is the X axis (at array position 1). The remaining `"time"` dimension (at array position 0) is a non-spatial axis and is not described by this convention.
 
