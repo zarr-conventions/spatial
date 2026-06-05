@@ -10,7 +10,7 @@
 
 ## Description
 
-This Zarr Convention defines metadata for describing the relationship between array indices and spatial coordinates. All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level following the [Zarr Conventions Specification](https://github.com/zarr-conventions/zarr-conventions-spec).
+This Zarr Convention defines metadata for describing the relationship between array indices and spatial coordinates. All properties use the `spatial:` namespace prefix. Properties are placed at the root `attributes` level following the [Zarr Conventions Specification](https://github.com/zarr-conventions/zarr-conventions-spec) except as described below with `multiscales`.
 
 ### Scope
 
@@ -18,14 +18,17 @@ The `spatial:` convention describes the **two horizontal (X/Y) spatial axes only
 
 This convention is designed to be composable with other conventions:
 
-- Use with a `proj:` convention to add coordinate reference system (CRS) information for geospatial data
-- Use with `multiscales` to define spatial properties at different resolution levels
+- Combine with the [`proj`] convention to add coordinate reference system (CRS) information for geospatial data
+- Combine with the [`multiscales`] convention to define spatial properties at different resolution levels
 - Use standalone for non-geospatial data that has spatial relationships (e.g., microscopy, medical imaging)
+
+[`proj`]: https://github.com/zarr-conventions/proj
+[`multiscales`]: https://github.com/zarr-conventions/multiscales
 
 Examples:
 
-- [composition with proj](examples/proj.json)
-- [composition with multiscales](examples/multiscales.json)
+- [Composition with `proj`](examples/proj.json)
+- [Composition with `multiscales`](examples/multiscales.json)
 
 ## Motivation
 
@@ -33,7 +36,7 @@ Examples:
 - **Broad applicability**: Useful for both geospatial and non-geospatial data with spatial relationships
 - **Simplicity**: No complex inheritance or override mechanisms needed
 - **Interoperability**: Compatible with existing geospatial tools (GDAL, rasterio) when composed with CRS information
-- **Composability**: Can extend other conventions like multiscales with spatial-specific properties
+- **Composability**: Can extend other conventions like [`multiscales`] with spatial-specific properties
 
 ## Convention Registration
 
@@ -62,7 +65,7 @@ This convention can be used with these parts of the Zarr hierarchy:
 
 ## Properties
 
-All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level.
+All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level. When composed with [`multiscales`], `spatial:transform` and `spatial:shape` may additionally be placed inside each `layout` item to specify values per resolution level (see [Usage with `multiscales` convention](#usage-with-multiscales-convention)).
 
 | Property                   | Type        | Description                                                         | Required | Reference                                        |
 | -------------------------- | ----------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
@@ -73,11 +76,11 @@ All properties use the `spatial:` namespace prefix and are placed at the root `a
 | **spatial:shape**          | `integer[2]`| Shape of the two spatial dimensions [height, width]                 | No       | [spatial:shape](#spatialshape)                   |
 | **spatial:registration**   | `string`    | Grid cell registration (i.e., raster space) type (default: "pixel") | No       | [spatial:registration](#spatialregistration)     |
 
-### Field Details
+### Additional Properties
 
 Additional properties are allowed.
 
-#### spatial:dimensions
+### spatial:dimensions
 
 Names of the array dimensions that have spatial coordinates.
 
@@ -92,7 +95,7 @@ Matching is **by name, not by position**: the order of entries in `spatial:dimen
 
 For 2D spatial data, provide 2 entries, e.g. `["y", "x"]`.
 
-#### spatial:bbox
+### spatial:bbox
 
 Bounding box in coordinate space
 
@@ -101,9 +104,9 @@ Bounding box in coordinate space
 
 Bounding box of the X/Y spatial extent in the coordinate space: `[xmin, ymin, xmax, ymax]` (exactly 4 elements).
 
-The coordinates represent the minimum and maximum values along the X and Y axes. The interpretation of these coordinates depends on any associated coordinate reference system (e.g., from a `proj:` convention) or can represent abstract spatial units.
+The coordinates represent the minimum and maximum values along the X and Y axes. The interpretation of these coordinates depends on any associated coordinate reference system (e.g., from the [`proj`] convention) or can represent abstract spatial units.
 
-#### spatial:transform_type
+### spatial:transform_type
 
 Type of coordinate transformation
 
@@ -121,7 +124,7 @@ Specifies the type of transformation used to map array indices to spatial coordi
 
 When `spatial:transform_type` is omitted, implementations MUST assume `"affine"` for backwards compatibility. Implementations encountering unknown transform types SHOULD handle them gracefully (e.g., warn or skip processing rather than fail).
 
-#### spatial:transform
+### spatial:transform
 
 Affine transformation coefficients
 
@@ -154,7 +157,7 @@ Where:
 - `e`: Resolution along the Y axis (negative value for north-up images)
 - `f`: Northern-most coordinate of the Y axis
 
-**Coordinate convention:**
+#### Coordinate convention
 
 The transform operates on array indices where `(0, 0)` is at the **top-left corner** of the top-left pixel, and `(width, height)` is at the bottom-right corner of the bottom-right pixel. The center of the top-left pixel is at `(0.5, 0.5)`.
 
@@ -162,19 +165,23 @@ This follows the GDAL geotransform and Python's Affine library convention.
 
 Note: Rasterio's `xy()` and `rowcol()` methods automatically add/subtract 0.5 to convert between pixel coordinates and corner coordinates. For example, `transformer.xy(0, 0)` is equivalent to applying this transform to `(0.5, 0.5)`, giving the coordinate at the center of the first pixel.
 
-**Coefficient ordering:**
+#### Coefficient ordering
 
 This format uses the Rasterio/Affine coefficient ordering: `[a, b, c, d, e, f]`
 
 This is the same ordering used by:
 
-- Rasterio's `Affine` transformation and `.transform` attribute
-- Python's `affine` library
+- [Rasterio's `Affine` transformation](https://rasterio.readthedocs.io/en/stable/topics/transforms.html) and `.transform` attribute
+- Python's [`Affine`] library
 - The matrix form commonly used in geospatial Python libraries
 
-GDAL's `GetGeoTransform` uses a different order: `[c, a, b, f, d, e]` or `[GT(0), GT(1), GT(2), GT(3), GT(4), GT(5)]`
+[`Affine`]: https://affine.readthedocs.io/en/latest/
 
-**Converting between formats:**
+**Converting to/from GDAL's coefficient ordering:**
+
+GDAL's [`GetGeoTransform`] uses a different order: `[c, a, b, f, d, e]` or `[GT(0), GT(1), GT(2), GT(3), GT(4), GT(5)]`
+
+[`GetGeoTransform`]: https://gdal.org/en/stable/tutorials/geotransforms_tut.html
 
 ```python
 # From GDAL GetGeoTransform to spatial:transform
@@ -188,7 +195,27 @@ affine_transform = src.transform  # Affine object
 spatial_transform = list(affine_transform)[:6]  # Direct conversion
 ```
 
-#### spatial:shape
+#### Usage with [`multiscales`] convention
+
+The multiscales convention defines transformations between resolution levels using the formula:
+
+```
+X_current = X_source × scale + translation
+```
+
+This is a domain-agnostic affine transformation (scale followed by translation). When composing with the `spatial:` convention, the interpretation depends on `spatial:registration`:
+
+When `spatial:registration` is `"pixel"` (the default), the pixel origin is defined by the `spatial:transform` (coefficients `c` and `f`) or `spatial:bbox` at each layout level. For standard geospatial overviews where all resolution levels share the same coordinate origin, the multiscales `translation` should be `[0.0, 0.0]`—only the pixel resolution (scale) changes between levels.
+
+The `spatial:transform` origin coordinates (`c`, `f`) remain constant across levels, while the pixel size (`a`, `e`) varies according to the resolution. Implementations must ensure consistency: if a level has `"scale": [2.0, 2.0]` relative to the base, its `spatial:transform` pixel dimensions should be twice those of the base level.
+
+Non-zero translation values are valid when there are actual spatial offsets between levels (e.g., cropped extents), but this is uncommon for georeferenced image pyramids.
+
+**Recommendation:** When composing with multiscales, it is highly recommended to specify `spatial:transform` and `spatial:shape` explicitly at each layout level. This ensures unambiguous georeferencing and avoids relying on derived calculations from multiscales transform parameters.
+
+See [examples/multiscales.json](examples/multiscales.json) for a complete example.
+
+### spatial:shape
 
 Shape of spatial dimensions
 
@@ -203,7 +230,7 @@ This property is particularly useful when:
 - Used with multiscales convention to specify shape at different resolution levels
 - Documenting the spatial extent explicitly
 
-#### spatial:registration
+### spatial:registration
 
 Grid cell registration type
 
@@ -214,7 +241,7 @@ Grid cell registration type
 
 Specifies whether the grid uses node registration (grid-registered) or pixel registration (cell-registered). This property is particularly important for grids where the interpretation of coordinate ranges differs between registration types.
 
-**Node Registration (grid/node):**
+#### Node Registration (grid/node)
 
 Node-registered grids have cells centered on the grid-lines. The coordinate ranges (`spatial:bbox` and `spatial:transform`) refer to the centers of the cells on the outside border of the grid, and the footprints of the cells extend 1/2 cell width outside these ranges.
 
@@ -223,7 +250,7 @@ Node-registered grids have cells centered on the grid-lines. The coordinate rang
 - A global grid will have cells centered directly on the North and South Poles
 - Has one more row and one more column than a pixel-registered grid with identical range
 
-**Pixel Registration (cell/pixel):**
+#### Pixel Registration (cell/pixel)
 
 Pixel-registered grids have cells lying between the grid-lines. The coordinate ranges refer to the outside edges of the boundaries of the grid.
 
@@ -232,7 +259,7 @@ Pixel-registered grids have cells lying between the grid-lines. The coordinate r
 - A global grid will touch the edges of the poles without covering their centers
 - Each cell in one registration overlaps quadrants of four cells in the corresponding node-registration
 
-**Important considerations:**
+#### Important considerations
 
 - Converting between registration types results in relief flattening, as each cell in one registration overlies corners of four cells in the other
 - The conversion process averages values, reducing local highs and raising local deeps
@@ -241,7 +268,7 @@ Pixel-registered grids have cells lying between the grid-lines. The coordinate r
 
 When `spatial:registration` is omitted, implementations MUST assume `"pixel"` registration for backwards compatibility.
 
-**Relationship to other formats:**
+#### Relationship to other formats
 
 This property corresponds to similar concepts in other geospatial formats:
 
@@ -249,7 +276,7 @@ This property corresponds to similar concepts in other geospatial formats:
 - **GMT**: `"pixel"` = pixel registration, `"node"` = gridline registration
 - **NetCDF-CF**: Related to the interpretation of coordinate bounds
 
-**References:**
+#### References
 
 For more detailed information on grid cell registration concepts:
 
@@ -426,36 +453,16 @@ In this example:
 - This enables efficient storage of multi-resolution geospatial data with proper georeferencing at each level
 - Note how CRS information (`proj:`) is separated from spatial coordinate information (`spatial:`)
 
-**Transform parameter interpretation with spatial:**
-
-The multiscales convention defines transformations between resolution levels using the formula:
-
-```
-X_current = X_source × scale + translation
-```
-
-This is a domain-agnostic affine transformation (scale followed by translation). When composing with the `spatial:` convention, the interpretation depends on `spatial:registration`:
-
-When `spatial:registration` is `"pixel"` (the default), the pixel origin is defined by the `spatial:transform` (coefficients `c` and `f`) or `spatial:bbox` at each layout level. For standard geospatial overviews where all resolution levels share the same coordinate origin, the multiscales `translation` should be `[0.0, 0.0]`—only the pixel resolution (scale) changes between levels.
-
-The `spatial:transform` origin coordinates (`c`, `f`) remain constant across levels, while the pixel size (`a`, `e`) varies according to the resolution. Implementations must ensure consistency: if a level has `"scale": [2.0, 2.0]` relative to the base, its `spatial:transform` pixel dimensions should be twice those of the base level.
-
-Non-zero translation values are valid when there are actual spatial offsets between levels (e.g., cropped extents), but this is uncommon for georeferenced image pyramids.
-
-**Recommendation:** When composing with multiscales, it is highly recommended to specify `spatial:transform` and `spatial:shape` explicitly at each layout level. This ensures unambiguous georeferencing and avoids relying on derived calculations from multiscales transform parameters.
-
-See [examples/multiscales.json](examples/multiscales.json) for a complete example.
-
 ## FAQ
 
-### Why are spatial: and proj: separate conventions?
+### Why are `spatial` and [`proj`] separate conventions?
 
 As explained in the [rasterio documentation](https://rasterio.readthedocs.io/): "There are two parts to the georeferencing of raster datasets: the definition of the local, regional, or global system in which a raster's pixels are located; and the parameters by which pixel coordinates are transformed into coordinates in that system."
 
 This fundamental distinction motivated the design decision ([zarr-conventions issue #9](https://github.com/zarr-conventions/zarr-conventions/issues/9)) to separate these concerns into two conventions:
 
-1. **`proj:`** - Defines the coordinate reference system (CRS): the "local, regional, or global system" using EPSG codes, WKT2, or PROJJSON
-2. **`spatial:`** - Defines the coordinate transformation: the "parameters by which pixel coordinates are transformed" including transform matrices, bounding boxes, and dimension mappings
+1. **[`proj`]:** defines the coordinate reference system (CRS): the "local, regional, or global system" using EPSG codes, WKT2, or PROJJSON
+2. **`spatial`:** Defines the coordinate transformation: the "parameters by which pixel coordinates are transformed" including transform matrices, bounding boxes, and dimension mappings
 
 This separation provides several benefits:
 
@@ -474,7 +481,7 @@ The STAC Projection Extension combines CRS and spatial coordinate information in
 
 Both approaches are valid. The separated approach prioritizes modularity and broader applicability, while STAC prioritizes simplicity for the geospatial-only use case.
 
-### Can I use spatial: without proj:?
+### Can I use `spatial` without [`proj`]?
 
 Yes! The `spatial:` convention is useful on its own for:
 
