@@ -6,7 +6,7 @@
 - **Spec URL**: "<https://github.com/zarr-conventions/spatial/blob/v1/README.md>"
 - **Scope**: Array, Group
 - **Extension Maturity Classification**: Proposal
-- **Owner**: @maxrjones, emmanuelmathot
+- **Owner**: @maxrjones, @emmanuelmathot, @kylebarron
 
 ## Description
 
