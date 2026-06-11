@@ -67,14 +67,14 @@ This convention can be used with these parts of the Zarr hierarchy:
 
 All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level. When composed with [`multiscales`], `spatial:transform` and `spatial:shape` may additionally be placed inside each `layout` item to specify values per resolution level (see [Usage with `multiscales` convention](#usage-with-multiscales-convention)).
 
-| Property                   | Type        | Description                                                         | Required | Reference                                        |
-| -------------------------- | ----------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
-| **spatial:dimensions**     | `string[2]` | Names of the two X/Y spatial dimensions (e.g., ["y", "x"])          | On arrays | [spatial:dimensions](#spatialdimensions)         |
-| **spatial:bbox**           | `number[4]` | 2D bounding box [xmin, ymin, xmax, ymax]                            | No       | [spatial:bbox](#spatialbbox)                     |
-| **spatial:transform_type** | `string`    | Type of coordinate transformation (default: "affine")               | No       | [spatial:transform_type](#spatialtransform_type) |
-| **spatial:transform**      | `number[6]` | 2D affine transformation coefficients                               | Conditional | [spatial:transform](#spatialtransform)           |
-| **spatial:shape**          | `integer[2]`| Shape of the two spatial dimensions [height, width]                 | No       | [spatial:shape](#spatialshape)                   |
-| **spatial:registration**   | `string`    | Grid cell registration (i.e., raster space) type (default: "pixel") | No       | [spatial:registration](#spatialregistration)     |
+| Property                   | Type         | Description                                                         | Required    | Reference                                        |
+| -------------------------- | ------------ | ------------------------------------------------------------------- | ----------- | ------------------------------------------------ |
+| **spatial:dimensions**     | `string[2]`  | Names of the two X/Y spatial dimensions (e.g., ["y", "x"])          | On arrays   | [spatial:dimensions](#spatialdimensions)         |
+| **spatial:bbox**           | `number[4]`  | 2D bounding box [xmin, ymin, xmax, ymax]                            | No          | [spatial:bbox](#spatialbbox)                     |
+| **spatial:transform_type** | `string`     | Type of coordinate transformation (default: "affine")               | No          | [spatial:transform_type](#spatialtransform_type) |
+| **spatial:transform**      | `number[6]`  | 2D affine transformation coefficients                               | Conditional | [spatial:transform](#spatialtransform)           |
+| **spatial:shape**          | `integer[2]` | Shape of the two spatial dimensions [height, width]                 | No          | [spatial:shape](#spatialshape)                   |
+| **spatial:registration**   | `string`     | Grid cell registration (i.e., raster space) type (default: "pixel") | No          | [spatial:registration](#spatialregistration)     |
 
 ### Additional Properties
 
@@ -102,11 +102,13 @@ The convention does not constrain the physical axis order of the array. A reader
 Bounding box in coordinate space
 
 - **Type**: `number[4]`
-- **Required**: No
+- **Required**: Conditional. See [Property placement](#property-placement).
 
 Bounding box of the X/Y spatial extent in the coordinate space: `[xmin, ymin, xmax, ymax]` (exactly 4 elements).
 
 The coordinates represent the minimum and maximum values along the X and Y axes. The interpretation of these coordinates depends on any associated coordinate reference system (e.g., from the [`proj`] convention) or can represent abstract spatial units.
+
+**Antimeridian crossings.** For geographic CRSes (longitude/latitude), `spatial:bbox` MAY have `xmin > xmax`. This indicates a bbox that crosses the antimeridian; the longitude range is `[xmin, 180]` joined with `[-180, xmax]`. Matches STAC's convention for the same case. For projected CRSes, `xmin > xmax` is invalid.
 
 ### spatial:transform_type
 
@@ -288,6 +290,47 @@ For more detailed information on grid cell registration concepts:
 - GMT Documentation: [Grid registration](https://docs.generic-mapping-tools.org/6.4/cookbook/options.html#option-nodereg)
 - GeoTIFF Specification: [Section 2.5.2.2 Raster Space](http://docs.opengeospatial.org/is/19-008r4/19-008r4.html#_raster_space)
 
+## Property placement
+
+`spatial:` properties have one canonical location each. Storing the same fact in two slots invites floating-point divergence and per-consumer tiebreakers; the schema forbids this.
+
+| Property                 | Array level                                                       | Group level                        |
+| ------------------------ | ----------------------------------------------------------------- | ---------------------------------- |
+| `spatial:dimensions`     | Required                                                          | Allowed (default for child arrays) |
+| `spatial:shape`          | Allowed                                                           | Forbidden                          |
+| `spatial:transform_type` | Allowed (default `"affine"`)                                      | Forbidden                          |
+| `spatial:transform`      | Required when `transform_type` is `"affine"`                      | Forbidden                          |
+| `spatial:registration`   | Allowed                                                           | Forbidden                          |
+| `spatial:bbox`           | Forbidden when `transform_type` is `"affine"`; required otherwise | Allowed                            |
+
+### Affine arrays
+
+For affine transforms the bbox is fully determined by `spatial:transform` and `spatial:shape`. Walk the four grid corners through the transform and take min/max:
+
+```python
+# spatial:transform = [a, b, c, d, e, f]; spatial:shape = [H, W]
+corners = [(0, 0), (W, 0), (W, H), (0, H)]   # (col, row) in index space
+xs = [a * col + b * row + c for col, row in corners]
+ys = [d * col + e * row + f for col, row in corners]
+bbox = (min(xs), min(ys), max(xs), max(ys))
+```
+
+This matches rasterio's [`array_bounds`](https://github.com/rasterio/rasterio/blob/main/rasterio/transform.py#L198) and GDAL's `gdalinfo` ([`gdalinfo_lib.cpp:1163-1178`](https://github.com/OSGeo/gdal/blob/master/apps/gdalinfo_lib.cpp#L1163)). The four-corner walk handles rotation and skew; using only two corners is wrong for any non-axis-aligned transform.
+
+Affine arrays MUST NOT carry `spatial:bbox` at the array level.
+
+### Non-affine arrays
+
+When `spatial:transform_type` is anything other than `"affine"` (e.g. `"rpc"`, `"polynomial"`, `"lookup"`, custom), no closed-form derivation exists. The producer MUST declare `spatial:bbox` at the array level and it is authoritative for that array.
+
+### Group level
+
+A group MAY carry `spatial:bbox` as the axis-aligned bounding rectangle of the union of descendant array extents. No other `spatial:` properties (`spatial:transform`, `spatial:transform_type`, `spatial:shape`, `spatial:registration`) are permitted at the group level. Group-level `spatial:bbox` does not inherit; consumers MUST NOT assume child arrays inherit it.
+
+### Multiscales layout entries
+
+When composing with the [multiscales convention](#composability-with-multiscales), each `multiscales.layout[]` entry MAY carry `spatial:shape` and `spatial:transform` to override values per resolution level. The same single-source rule applies: `spatial:bbox` is forbidden at the layout-entry level (it is derivable from `spatial:transform` + `spatial:shape` per level, and the group-level `spatial:bbox` is the discovery slot).
+
 ## Examples
 
 ### Basic Array Example with Spatial Convention Only
@@ -312,7 +355,6 @@ For non-geospatial data or when CRS is not needed:
     "spatial:dimensions": ["y", "x"],
     "spatial:shape": [1024, 1024],
     "spatial:transform": [1.0, 0.0, 0.0, 0.0, -1.0, 1024.0],
-    "spatial:bbox": [0.0, 0.0, 1024.0, 1024.0],
     "spatial:registration": "pixel"
   }
 }
@@ -342,7 +384,6 @@ For a Digital Elevation Model using node registration (grid-registered):
     "spatial:transform": [
       0.000277777778, 0.0, -180.0, 0.0, -0.000277777778, 90.0
     ],
-    "spatial:bbox": [-180.0, -90.0, 180.0, 90.0],
     "spatial:registration": "node"
   }
 }
@@ -378,10 +419,7 @@ For geospatial data, combine `spatial:` with `proj:` for complete coordinate inf
     ],
     "proj:code": "EPSG:3857",
     "spatial:dimensions": ["Y", "X"],
-    "spatial:bbox": [
-      -20037508.342789244, -20037508.342789244, 20037508.342789244,
-      20037508.342789244
-    ],
+    "spatial:shape": [256, 256],
     "spatial:transform": [
       156543.03392804097, 0.0, -20037508.342789244, 0.0, -156543.03392804097,
       20037508.342789244
@@ -496,7 +534,7 @@ Yes! The `spatial:` convention is useful on its own for:
 
 ### Does `spatial:` replace explicit coordinate arrays?
 
-**Yes, for affine cases.** The `spatial:transform` provides *implicit* coordinates: applying the affine matrix to an array index yields the coordinate of that cell, so explicit per-axis `x`/`y` coordinate arrays (as commonly stored alongside NetCDF/xarray data) are not required and would be redundant.
+**Yes, for affine cases.** The `spatial:transform` provides _implicit_ coordinates: applying the affine matrix to an array index yields the coordinate of that cell, so explicit per-axis `x`/`y` coordinate arrays (as commonly stored alongside NetCDF/xarray data) are not required and would be redundant.
 
 Storing explicit coordinate arrays is still allowed — for instance, when:
 

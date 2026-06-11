@@ -46,6 +46,109 @@
           }
         }
       }
+    },
+    {
+      "$comment": "Affine arrays (transform_type absent or 'affine') MUST NOT carry spatial:bbox; it is derivable from spatial:transform and spatial:shape.",
+      "if": {
+        "properties": { "node_type": { "const": "array" } },
+        "required": ["node_type"]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "if": {
+              "anyOf": [
+                { "not": { "required": ["spatial:transform_type"] } },
+                {
+                  "properties": {
+                    "spatial:transform_type": { "const": "affine" }
+                  },
+                  "required": ["spatial:transform_type"]
+                }
+              ]
+            },
+            "then": {
+              "not": { "required": ["spatial:bbox"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "Non-affine arrays (transform_type present and != 'affine') MUST carry spatial:bbox; no closed-form derivation exists.",
+      "if": {
+        "properties": { "node_type": { "const": "array" } },
+        "required": ["node_type"]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "if": {
+              "properties": {
+                "spatial:transform_type": { "not": { "const": "affine" } }
+              },
+              "required": ["spatial:transform_type"]
+            },
+            "then": {
+              "required": ["spatial:bbox"]
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "Groups MUST NOT carry per-array spatial properties; only spatial:bbox (and the existing spatial:dimensions ergonomics slot) belong at the group level.",
+      "if": {
+        "properties": { "node_type": { "const": "group" } },
+        "required": ["node_type"]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "allOf": [
+              { "not": { "required": ["spatial:transform"] } },
+              { "not": { "required": ["spatial:transform_type"] } },
+              { "not": { "required": ["spatial:shape"] } },
+              { "not": { "required": ["spatial:registration"] } }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "$comment": "Multiscales layout entries follow the same single-source rule: each carries spatial:shape and spatial:transform per resolution level; spatial:bbox at the layout-entry level is forbidden (derivable, and the group-level bbox is the discovery slot).",
+      "if": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "multiscales": {
+                "type": "object",
+                "required": ["layout"]
+              }
+            },
+            "required": ["multiscales"]
+          }
+        },
+        "required": ["attributes"]
+      },
+      "then": {
+        "properties": {
+          "attributes": {
+            "properties": {
+              "multiscales": {
+                "properties": {
+                  "layout": {
+                    "items": {
+                      "not": { "required": ["spatial:bbox"] }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {

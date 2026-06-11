@@ -3,7 +3,7 @@
   "name": "spatial-zarr-convention",
   "version": "0.1.0",
   "scripts": {
-    "test": "node test.js",
+    "test": "node test.js && node test-rules.js",
     "lint": "eslint .",
     "format": "prettier . --write"
   },
