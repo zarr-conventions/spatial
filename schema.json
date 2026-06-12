@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+  "$id": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v0.1/schema.json",
   "title": "Spatial Coordinate Convention (spatial:)",
   "description": "Schema for spatial coordinate information in Zarr. Properties use the 'spatial:' namespace prefix. This convention defines the relationship between array indices and spatial coordinates.",
   "type": "object",
@@ -55,12 +55,12 @@
       "properties": {
         "schema_url": {
           "type": "string",
-          "const": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+          "const": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v0.1/schema.json",
           "description": "URL to the JSON Schema definition for this convention"
         },
         "spec_url": {
           "type": "string",
-          "const": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+          "const": "https://github.com/zarr-conventions/spatial/blob/v0.1/README.md",
           "description": "URL to the full specification document"
         },
         "uuid": {

@@ -2,10 +2,10 @@
 
 - **UUID**: 689b58e2-cf7b-45e0-9fff-9cfc0883d6b4
 - **Name**: "spatial"
-- **Schema URL**: "<https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json>"
-- **Spec URL**: "<https://github.com/zarr-conventions/spatial/blob/v1/README.md>"
+- **Schema URL**: "<https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v0.1/schema.json>"
+- **Spec URL**: "<https://github.com/zarr-conventions/spatial/blob/v0.1/README.md>"
 - **Scope**: Array, Group
-- **Extension Maturity Classification**: Proposal
+- **Extension Maturity Classification**: Pilot
 - **Owner**: @maxrjones, @emmanuelmathot, @kylebarron
 
 ## Description
@@ -14,7 +14,7 @@ This Zarr Convention defines metadata for describing the relationship between ar
 
 ### Scope
 
-The `spatial:` convention describes the **two horizontal (X/Y) spatial axes only**. Arrays may have additional dimensions (bands, time, depth/Z, etc.); the `spatial:` properties simply identify and describe the two X/Y axes of such arrays. Any non-X/Y axis is out of scope for this convention and is expected to be described by another convention (e.g., CF coordinate variables for Z/time, or a future n-dimensional coordinate convention).
+The `spatial` convention describes the **two horizontal (X/Y) spatial axes only**. Arrays may have additional dimensions (bands, time, depth/Z, etc.); the `spatial` properties simply identify and describe the two X/Y axes of such arrays. Any non-X/Y axis is out of scope for this convention and is expected to be described by another convention (e.g., CF coordinate variables for Z/time, or a future n-dimensional coordinate convention).
 
 This convention is designed to be composable with other conventions:
 
@@ -46,8 +46,8 @@ The convention must be registered in `zarr_conventions`:
 {
   "zarr_conventions": [
     {
-      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
-      "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v0.1/schema.json",
+      "spec_url": "https://github.com/zarr-conventions/spatial/blob/v0.1/README.md",
       "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
       "name": "spatial",
       "description": "Spatial coordinate information"
@@ -207,7 +207,7 @@ The multiscales convention defines transformations between resolution levels usi
 X_current = X_source × scale + translation
 ```
 
-This is a domain-agnostic affine transformation (scale followed by translation). When composing with the `spatial:` convention, the interpretation depends on `spatial:registration`:
+This is a domain-agnostic affine transformation (scale followed by translation). When composing with the `spatial` convention, the interpretation depends on `spatial:registration`:
 
 When `spatial:registration` is `"pixel"` (the default), the pixel origin is defined by the `spatial:transform` (coefficients `c` and `f`) or `spatial:bbox` at each layout level. For standard geospatial overviews where all resolution levels share the same coordinate origin, the multiscales `translation` should be `[0.0, 0.0]`—only the pixel resolution (scale) changes between levels.
 
@@ -302,8 +302,8 @@ For non-geospatial data or when CRS is not needed:
   "attributes": {
     "zarr_conventions": [
       {
-        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
-        "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v0.1/schema.json",
+        "spec_url": "https://github.com/zarr-conventions/spatial/blob/v0.1/README.md",
         "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
         "name": "spatial",
         "description": "Spatial coordinate information"
@@ -330,8 +330,8 @@ For a Digital Elevation Model using node registration (grid-registered):
   "attributes": {
     "zarr_conventions": [
       {
-        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
-        "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v0.1/schema.json",
+        "spec_url": "https://github.com/zarr-conventions/spatial/blob/v0.1/README.md",
         "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
         "name": "spatial",
         "description": "Spatial coordinate information"
@@ -350,9 +350,9 @@ For a Digital Elevation Model using node registration (grid-registered):
 
 In this example, the grid has 3601 x 3601 cells covering -180° to 180° longitude and -90° to 90° latitude. With node registration, cells are centered on the coordinate points, including cells centered exactly on the North Pole (90°) and South Pole (-90°). The cell footprints extend 1/2 cell width (approximately 0.00013889°) beyond these ranges.
 
-### Composition with proj: Convention
+### Composition with the `proj` Convention
 
-For geospatial data, combine `spatial:` with `proj:` for complete coordinate information:
+For geospatial data, combine `spatial` with `proj` for complete coordinate information:
 
 ```json
 {
@@ -362,15 +362,15 @@ For geospatial data, combine `spatial:` with `proj:` for complete coordinate inf
   "attributes": {
     "zarr_conventions": [
       {
-        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/proj/refs/tags/v1/schema.json",
-        "spec_url": "https://github.com/zarr-conventions/proj/blob/v1/README.md",
+        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/proj/refs/tags/v0.1/schema.json",
+        "spec_url": "https://github.com/zarr-conventions/proj/blob/v0.1/README.md",
         "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
-        "name": "proj:",
+        "name": "proj",
         "description": "Coordinate reference system information for geospatial data"
       },
       {
-        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
-        "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+        "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v0.1/schema.json",
+        "spec_url": "https://github.com/zarr-conventions/spatial/blob/v0.1/README.md",
         "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
         "name": "spatial",
         "description": "Spatial coordinate information"
@@ -398,22 +398,22 @@ The spatial: convention can extend multiscales layouts by adding spatial propert
 {
   "zarr_conventions": [
     {
-      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/multiscales/refs/tags/v1/schema.json",
-      "spec_url": "https://github.com/zarr-conventions/multiscales/blob/v1/README.md",
+      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/multiscales/refs/tags/v0.1/schema.json",
+      "spec_url": "https://github.com/zarr-conventions/multiscales/blob/v0.1/README.md",
       "uuid": "d35379db-88df-4056-af3a-620245f8e347",
       "name": "multiscales",
       "description": "Multiscale layout of zarr datasets"
     },
     {
-      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/proj/refs/tags/v1/schema.json",
-      "spec_url": "https://github.com/zarr-conventions/proj/blob/v1/README.md",
+      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/proj/refs/tags/v0.1/schema.json",
+      "spec_url": "https://github.com/zarr-conventions/proj/blob/v0.1/README.md",
       "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
-      "name": "proj:",
+      "name": "proj",
       "description": "Coordinate reference system information for geospatial data"
     },
     {
-      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
-      "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+      "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v0.1/schema.json",
+      "spec_url": "https://github.com/zarr-conventions/spatial/blob/v0.1/README.md",
       "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
       "name": "spatial",
       "description": "Spatial coordinate information"
@@ -455,7 +455,7 @@ In this example:
 - Each layout item has its own `spatial:shape` and `spatial:transform` specific to that resolution
 - The multiscales convention defines the relative transformations between levels via the `transform` object
 - This enables efficient storage of multi-resolution geospatial data with proper georeferencing at each level
-- Note how CRS information (`proj:`) is separated from spatial coordinate information (`spatial:`)
+- Note how CRS information (`proj`) is separated from spatial coordinate information (`spatial`)
 
 ## FAQ
 
@@ -480,21 +480,21 @@ This separation provides several benefits:
 
 The STAC Projection Extension combines CRS and spatial coordinate information in a single extension. This spatial convention takes a different approach:
 
-- **STAC approach**: Single `proj:` extension with both CRS (`proj:epsg`, `proj:wkt2`) and coordinates (`proj:bbox`, `proj:transform`)
-- **This approach**: Separate conventions - `proj:` for CRS, `spatial:` for coordinates
+- **STAC approach**: Single `proj` extension with both CRS (`proj:epsg`, `proj:wkt2`) and coordinates (`proj:bbox`, `proj:transform`)
+- **This approach**: Separate conventions - `proj` for CRS, `spatial` for coordinates
 
 Both approaches are valid. The separated approach prioritizes modularity and broader applicability, while STAC prioritizes simplicity for the geospatial-only use case.
 
 ### Can I use `spatial` without [`proj`]?
 
-Yes! The `spatial:` convention is useful on its own for:
+Yes! The `spatial` convention is useful on its own for:
 
 - Non-geospatial data with spatial relationships (microscopy, medical imaging)
 - Data where coordinates are in abstract units
 - Workflows that don't need formal CRS definitions
 - Cases where CRS information is managed separately
 
-### Does `spatial:` replace explicit coordinate arrays?
+### Does `spatial` replace explicit coordinate arrays?
 
 **Yes, for affine cases.** The `spatial:transform` provides *implicit* coordinates: applying the affine matrix to an array index yields the coordinate of that cell, so explicit per-axis `x`/`y` coordinate arrays (as commonly stored alongside NetCDF/xarray data) are not required and would be redundant.
 
@@ -503,25 +503,25 @@ Storing explicit coordinate arrays is still allowed — for instance, when:
 - Coordinates are non-affine (irregular spacing, curvilinear grids, swath data) and cannot be expressed by `spatial:transform_type: "affine"`. A future `spatial:transform_type: "lookup"` (see [spatial:transform_type](#spatialtransform_type)) is intended to reference such arrays explicitly.
 - You want xarray/CF tooling to discover coordinates by name without computing them from the transform.
 
-In those cases the explicit coordinate arrays carry the values; `spatial:` still describes the spatial dimensions and any bounding box, and `proj:` (if present) defines the CRS those values live in.
+In those cases the explicit coordinate arrays carry the values; `spatial` still describes the spatial dimensions and any bounding box, and `proj` (if present) defines the CRS those values live in.
 
 ### Can I use spatial: at the group level?
 
-Yes, `spatial:` properties can be defined at both group and array levels. When defined at the group level:
+Yes, `spatial` properties can be defined at both group and array levels. When defined at the group level:
 
-- Properties apply to direct child arrays that don't define their own `spatial:` properties
+- Properties apply to direct child arrays that don't define their own `spatial` properties
 - This is useful when multiple arrays share the same spatial coordinate system
-- Arrays can define their own `spatial:` properties to override or supplement group-level definitions
+- Arrays can define their own `spatial` properties to override or supplement group-level definitions
 
-This is particularly useful with multiscales, where the CRS (`proj:`) is shared but spatial properties (`spatial:shape`, `spatial:transform`) vary per resolution level.
+This is particularly useful with multiscales, where the CRS (`proj`) is shared but spatial properties (`spatial:shape`, `spatial:transform`) vary per resolution level.
 
-### What's required when using spatial: with proj:?
+### What's required when using spatial: with proj?
 
-When composing `spatial:` with a `proj:` convention:
+When composing `spatial` with a `proj` convention:
 
 - Both conventions must be listed in `zarr_conventions`
 - `spatial:dimensions` must be provided on each array to identify which of the array's `dimension_names` are spatial
-- The coordinate values in `spatial:bbox` and `spatial:transform` should be in the coordinate system defined by `proj:`
+- The coordinate values in `spatial:bbox` and `spatial:transform` should be in the coordinate system defined by `proj`
 
 ### How does the convention support different transformation types?
 
@@ -537,15 +537,15 @@ Implementations should handle unknown transform types gracefully (warn or skip) 
 
 ### What about a Z (depth/altitude) dimension or 3D data?
 
-In v1, `spatial:` describes only the two horizontal X/Y axes. Arrays may still have additional dimensions (Z, time, bands, etc.); the `spatial:` properties simply describe the X/Y axes of such arrays and say nothing about the other axes.
+In v0.1, `spatial` describes only the two horizontal X/Y axes. Arrays may still have additional dimensions (Z, time, bands, etc.); the `spatial` properties simply describe the X/Y axes of such arrays and say nothing about the other axes.
 
-This is a deliberate choice for v1 (see [issue #10](https://github.com/zarr-conventions/spatial/issues/10)):
+This is a deliberate choice for v0.1 (see [issue #10](https://github.com/zarr-conventions/spatial/issues/10)):
 
 - No mainstream geospatial library supports 3D affine transforms — GDAL, rasterio, the Affine library, and GeoTIFF are all strictly 2D. CF/NetCDF treats vertical axes as independent 1D coordinate variables rather than as part of an affine transform.
 - In practice the Z axis is almost always independent of X/Y (just a scale + offset, or irregular coordinate values), so a full 3D affine with XZ/YZ rotation would be overkill.
-- Keeping v1 small and stable lets the convention be adopted broadly for the well-understood 2D case before adding spec surface area driven by less common use cases.
+- Keeping v0.1 small and stable lets the convention be adopted broadly for the well-understood 2D case before adding spec surface area driven by less common use cases.
 
-Non-X/Y axes (Z, time, bands, …) can be described by composing with another convention, e.g., a CF-style coordinate variable convention. A future revision of `spatial:` (or a sibling convention) may add explicit ND coordinate semantics once the ecosystem need and design are clear.
+Non-X/Y axes (Z, time, bands, …) can be described by composing with another convention, e.g., a CF-style coordinate variable convention. A future revision of `spatial` (or a sibling convention) may add explicit ND coordinate semantics once the ecosystem need and design are clear.
 
 ### How does spatial:registration relate to GeoTIFF PixelIsArea/PixelIsPoint?
 
@@ -584,6 +584,23 @@ The choice between node and pixel registration depends on your data type and how
 - A node-registered grid with shape [n, m] covering the same extent as a pixel-registered grid will have one more row and column
 - For example, a 1° global grid: node registration would be 181 x 361 (cells at -90° to 90° and -180° to 180°), while pixel registration would be 180 x 360 (cells between these values)
 - When in doubt, use pixel registration (the default) as it's more common for imagery and prevents edge artifacts
+
+## Versioning and Compatibility
+
+This convention is identified by its permanent UUID (`689b58e2-cf7b-45e0-9fff-9cfc0883d6b4`). The UUID MUST NOT change across versions; a different UUID denotes a different convention, not a new version.
+
+The convention is versioned in this repository and tagged according to its maturity in the [Zarr Conventions Framework](https://github.com/zarr-conventions/.github/blob/main/profile/README.md), following the proposed GeoZarr versioning policy ([geozarr-spec#139](https://github.com/zarr-developers/geozarr-spec/pull/139)). The current `v0.x` releases are pre-stable: **breaking changes should be expected until the first stable release, `v1`.** We anticipate releasing `v1` before the end of 2026.
+
+A specific version is expressed by the tag in this convention's `schema_url` and `spec_url` (for example, `v0.1`); the convention does not define a separate `version` attribute. Whether versions after `v1` follow Semantic Versioning, integer versions, or another scheme is deferred (see [geozarr-spec#102](https://github.com/zarr-developers/geozarr-spec/issues/102) and [zarr-conventions-spec#29](https://github.com/zarr-conventions/zarr-conventions-spec/issues/29)) and is not prescribed here.
+
+There is no stable alternative for describing the relationship between array indices and X/Y spatial coordinates in Zarr, so we encourage you to try this convention now; early adoption and implementation feedback are what move it toward a stable `v1`.
+
+### Compatibility Guarantees
+
+Per the Zarr Conventions Framework, this convention is safely ignorable: it changes only how data is *interpreted*, never how it is encoded or stored.
+
+- An implementation that does not recognize this convention (by UUID or schema URL), or that encounters a newer version of it, MUST still be able to read the underlying Zarr arrays correctly.
+- Implementations SHOULD gracefully handle unknown optional fields rather than failing, so that additive changes do not break existing readers.
 
 ## Acknowledgements
 
