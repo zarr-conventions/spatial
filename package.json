@@ -2,10 +2,15 @@
   "type": "module",
   "name": "spatial-zarr-convention",
   "version": "0.1.0",
+  "packageManager": "pnpm@11.5.3",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "node test.js",
     "lint": "eslint .",
-    "format": "prettier . --write"
+    "format": "prettier . --write",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@eslint/json": "^0.14.0",
@@ -13,6 +18,7 @@
     "ajv": "^8.12.0",
     "eslint": "^9.39.1",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
     "prettier": "3.7.4"
   }
 }
