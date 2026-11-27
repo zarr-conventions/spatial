@@ -108,6 +108,8 @@ Bounding box of the X/Y spatial extent in the coordinate space: `[xmin, ymin, xm
 
 The coordinates represent the minimum and maximum values along the X and Y axes. The interpretation of these coordinates depends on any associated coordinate reference system (e.g., from the [`proj`] convention) or can represent abstract spatial units.
 
+When the coordinate reference system is geographic (longitude and latitude) and the extent crosses the antimeridian, `xmin` is the western-most longitude and `xmax` is the eastern-most longitude, so `xmin` is greater than `xmax` (e.g., `[177.0, -20.0, -178.0, -16.0]`). This is the same rule as for a GeoJSON bounding box ([RFC 7946, section 5.2](https://datatracker.ietf.org/doc/html/rfc7946#section-5.2)) and a STAC `bbox`. In all other cases, `xmin` MUST NOT be greater than `xmax`.
+
 ### spatial:transform_type
 
 Type of coordinate transformation
