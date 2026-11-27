@@ -3,3 +3,6 @@ These files are **invalid** and are included to test that the JSON Schema correc
 - `sentinel2-tci.json` is invalid because it doesn't have a `spatial:transform` on each item in `layout`.
 - `dem-multiresolution.json` is invalid because it has a `spatial:transform` at the top level.
 - `dem-multiresolution-partial.json` is invalid because it is missing `spatial:transform` on some of the items in `layout`. It has no `spatial:transform` at the top level, so that it tests only this rule.
+- `no-zarr-conventions.json` is invalid because it has no `zarr_conventions`.
+- `convention-not-declared.json` is invalid because `zarr_conventions` does not declare the `spatial` convention.
+- `transform-wrong-length.json` is invalid because `spatial:transform` has 5 values.

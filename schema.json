@@ -27,7 +27,7 @@
         }
       },
       "required": ["zarr_conventions"],
-      "$ref": "#/$defs/spatialAttributes"
+      "allOf": [{ "$ref": "#/$defs/spatialAttributes" }]
     }
   },
   "required": ["zarr_format", "node_type", "attributes"],
