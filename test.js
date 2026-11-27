@@ -4,7 +4,7 @@ import { join, extname } from "path";
 import { execSync } from "child_process";
 
 const examplesDir = "examples";
-const invalidExamplesDir = "invalid_examples";
+const invalidExamplesDir = "tests/invalid";
 const schemaFile = "schema.json";
 
 async function runTests() {
@@ -52,7 +52,7 @@ async function runTests() {
     const jsonFiles = files.filter((file) => extname(file) === ".json");
 
     if (jsonFiles.length === 0) {
-      console.log("⚠️  No JSON files found in invalid_examples directory");
+      console.log("⚠️  No JSON files found in tests/invalid directory");
       process.exit(1);
     }
 
@@ -74,7 +74,7 @@ async function runTests() {
       }
     }
   } catch (error) {
-    console.error("Error reading invalid_examples directory:", error.message);
+    console.error("Error reading tests/invalid directory:", error.message);
     process.exit(1);
   }
 

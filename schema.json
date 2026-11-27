@@ -145,7 +145,7 @@
         },
         "multiscales": {
           "type": "object",
-          "description": "When composing with multiscales convention, spatial: properties must be added to every layout item. spatial:transform is required on all layout items to unambiguously define the coordinate transformation for each resolution level.",
+          "description": "When composing with the multiscales convention, `spatial:transform` is required on every layout item to unambiguously define the coordinate transformation for each resolution level. `spatial:transform` and `spatial:shape` must not appear at the root attributes level in this case.",
           "properties": {
             "layout": {
               "type": "array",
@@ -164,7 +164,7 @@
                   },
                   "spatial:transform": {
                     "type": "array",
-                    "description": "Affine transform for this resolution level mapping array indices to coordinates [a, b, c, d, e, f]. Required on every layout item when using multiscales with this convention.",
+                    "description": "Affine transform for this resolution level, mapping array indices to coordinates [a, b, c, d, e, f]. Required on every layout item.",
                     "minItems": 6,
                     "maxItems": 6,
                     "items": {
@@ -183,6 +183,7 @@
       "if": {
         "properties": {
           "multiscales": {
+            "type": "object",
             "required": ["layout"]
           }
         },
