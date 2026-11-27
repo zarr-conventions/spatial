@@ -163,11 +163,14 @@ Where:
 
 #### Coordinate convention
 
-The transform operates on array indices where `(0, 0)` is at the **top-left corner** of the top-left pixel, and `(width, height)` is at the bottom-right corner of the bottom-right pixel. The center of the top-left pixel is at `(0.5, 0.5)`.
+The meaning of the index-space point `(col_index, row_index) = (0, 0)` depends on [`spatial:registration`](#spatialregistration):
 
-This follows the GDAL geotransform and Python's Affine library convention.
+- **`"pixel"` (default):** `(0, 0)` is the **top-left corner**, in index space, of the first array element, and `(width, height)` is the bottom-right corner of the last array element. The center of the first array element is at `(0.5, 0.5)`. Coefficients `c` and `f` give the coordinates of that corner. This follows the GDAL geotransform and Python's Affine library convention.
+- **`"node"`:** `(0, 0)` is the **location (node)** of the first array element, and `(width - 1, height - 1)` is the location of the last array element. Coefficients `c` and `f` give the coordinates of that node.
 
-Note: Rasterio's `xy()` and `rowcol()` methods automatically add/subtract 0.5 to convert between pixel coordinates and corner coordinates. For example, `transformer.xy(0, 0)` is equivalent to applying this transform to `(0.5, 0.5)`, giving the coordinate at the center of the first pixel.
+This matches the [GeoTIFF raster space model](http://docs.opengeospatial.org/is/19-008r4/19-008r4.html#_raster_space), where the model tie point at `(0, 0)` gives a corner for PixelIsArea and a point location for PixelIsPoint.
+
+Note: With `"pixel"` registration, Rasterio's `xy()` and `rowcol()` methods automatically add/subtract 0.5 to convert between pixel coordinates and corner coordinates. For example, `transformer.xy(0, 0)` is equivalent to applying this transform to `(0.5, 0.5)`, giving the coordinate at the center of the first pixel.
 
 #### Coefficient ordering
 
@@ -198,6 +201,8 @@ from affine import Affine
 affine_transform = src.transform  # Affine object
 spatial_transform = list(affine_transform)[:6]  # Direct conversion
 ```
+
+These conversions apply to `"pixel"` registration. GDAL and Rasterio transforms refer to the corner of the first pixel. For `"node"` registration, shift the origin by half a pixel (`c + a/2 + b/2`, `f + d/2 + e/2`).
 
 #### Usage with [`multiscales`] convention
 
@@ -342,13 +347,13 @@ For a Digital Elevation Model using node registration (grid-registered):
     "spatial:transform": [
       0.000277777778, 0.0, -180.0, 0.0, -0.000277777778, 90.0
     ],
-    "spatial:bbox": [-180.0, -90.0, 180.0, 90.0],
+    "spatial:bbox": [-180.0, 89.0, -179.0, 90.0],
     "spatial:registration": "node"
   }
 }
 ```
 
-In this example, the grid has 3601 x 3601 cells covering -180° to 180° longitude and -90° to 90° latitude. With node registration, cells are centered on the coordinate points, including cells centered exactly on the North Pole (90°) and South Pole (-90°). The cell footprints extend 1/2 cell width (approximately 0.00013889°) beyond these ranges.
+In this example, the grid has 3601 x 3601 cells at a spacing of 1 arc-second, covering -180° to -179° longitude and 89° to 90° latitude. With node registration, cells are centered on the coordinate points, including cells centered exactly on the North Pole (90°). The cell footprints extend 1/2 cell width (approximately 0.00013889°) beyond these ranges.
 
 ### Composition with the `proj` Convention
 
