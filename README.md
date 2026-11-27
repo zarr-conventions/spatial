@@ -65,7 +65,7 @@ This convention can be used with these parts of the Zarr hierarchy:
 
 ## Properties
 
-All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level. When composed with [`multiscales`], `spatial:transform` and `spatial:shape` may additionally be placed inside each `layout` item to specify values per resolution level (see [Usage with `multiscales` convention](#usage-with-multiscales-convention)).
+All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level. When composed with [`multiscales`], `spatial:transform` MUST be placed inside each `layout` item and `spatial:shape` MAY be placed there, to specify values per resolution level. In that case, `spatial:transform` and `spatial:shape` MUST NOT be placed at the root `attributes` level (see [Usage with `multiscales` convention](#usage-with-multiscales-convention)).
 
 | Property                   | Type        | Description                                                         | Required | Reference                                        |
 | -------------------------- | ----------- | ------------------------------------------------------------------- | -------- | ------------------------------------------------ |
@@ -215,7 +215,7 @@ The `spatial:transform` origin coordinates (`c`, `f`) remain constant across lev
 
 Non-zero translation values are valid when there are actual spatial offsets between levels (e.g., cropped extents), but this is uncommon for georeferenced image pyramids.
 
-**Recommendation:** When composing with multiscales, it is highly recommended to specify `spatial:transform` and `spatial:shape` explicitly at each layout level. This ensures unambiguous georeferencing and avoids relying on derived calculations from multiscales transform parameters.
+**Requirement:** When the `multiscales` attribute with a `layout` is present, `spatial:transform` MUST be specified on every layout item. `spatial:transform` and `spatial:shape` MUST NOT appear at the root `attributes` level, because a root-level value does not identify the resolution level that it describes. It is recommended to also specify `spatial:shape` on every layout item.
 
 See [examples/multiscales.json](examples/multiscales.json) for a complete example.
 
