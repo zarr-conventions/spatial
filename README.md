@@ -63,6 +63,13 @@ This convention can be used with these parts of the Zarr hierarchy:
 - [x] Group
 - [x] Array
 
+## Inheritance Model
+
+The `spatial` convention follows the same group-to-array inheritance model as the [`proj`] convention:
+
+1. **Group-level definition**: When `spatial` properties are defined at the group level, they apply to the arrays that are direct children of that group and that do not define their own `spatial` properties. They do not apply to groups or arrays deeper in the hierarchy (e.g., grandchildren).
+2. **Array-level override**: An array can define its own `spatial` properties to override or supplement the group-level definitions.
+
 ## Properties
 
 All properties use the `spatial:` namespace prefix and are placed at the root `attributes` level. When composed with [`multiscales`], `spatial:transform` and `spatial:shape` may additionally be placed inside each `layout` item to specify values per resolution level (see [Usage with `multiscales` convention](#usage-with-multiscales-convention)).
@@ -514,6 +521,12 @@ Yes, `spatial` properties can be defined at both group and array levels. When de
 - Arrays can define their own `spatial` properties to override or supplement group-level definitions
 
 This is particularly useful with multiscales, where the CRS (`proj`) is shared but spatial properties (`spatial:shape`, `spatial:transform`) vary per resolution level.
+
+### Which one should I use when `spatial:bbox` and `spatial:transform` do not agree?
+
+The two properties have different purposes. `spatial:transform` gives the mapping from array indices to coordinates. `spatial:bbox` gives a quick extent of the data, for example for discovery or for a rough intersection test.
+
+For an affine transform, the extent can be computed from `spatial:transform` and the size of the spatial dimensions, so the two values can differ slightly because of floating-point rounding. In that case, use `spatial:transform` for the position of the data and treat `spatial:bbox` as an approximate extent.
 
 ### What's required when using spatial: with proj?
 
